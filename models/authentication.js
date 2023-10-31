@@ -1,7 +1,5 @@
 const mongoose = require('mongoose');
 
-// Assuming you have already connected to MongoDB
-
 const AuthenticationSchema = new mongoose.Schema({
    tokenID: mongoose.Schema.Types.ObjectId,
    userID: mongoose.Schema.Types.ObjectId,
@@ -10,6 +8,7 @@ const AuthenticationSchema = new mongoose.Schema({
 });
 
 const Authentication = mongoose.model('Authentication', AuthenticationSchema);
+
 
 // Function to remove expired tokens
 function removeExpiredTokens() {
@@ -24,6 +23,7 @@ function removeExpiredTokens() {
 }
 
 // Schedule the function to run periodically
-// For example, running every hour using setInterval
 
+
+// itrerate every hour
 setInterval(removeExpiredTokens, 1000 * 60 * 60);

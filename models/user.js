@@ -12,15 +12,21 @@ const userSchema = new mongoose.Schema({
         unique: true
     },
     password: String, // Removed required: true as it's not needed for Google auth users
-    googleId: {       // Add this field to store the Google ID for users who sign up with Google
+    googleId: {
         type: String,
+        unique: true
+    },
+    subscription: {
+        type: String,
+        enum: ['free', 'gold', 'premium'],
+        default: 'free',
+    },
+    stripeCustomerId: {
+        type: String, // Store the Stripe customer ID here (using it to integrate payment gateway)
         unique: true,
-        sparse: true   // This makes sure the unique constraint applies only to documents where googleId is set
-    }
+    },
 }, {
-    timestamps: true  // This will automatically create createdAt and updatedAt fields
+    timestamps: true
 });
-
-userSchema.index({ username: 1, email: 1 });
 
 module.exports = mongoose.model('User', userSchema);

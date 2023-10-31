@@ -1,4 +1,4 @@
-const User = require('../models/User');
+const User = require('../models/user');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
@@ -6,6 +6,7 @@ const nodemailer = require('nodemailer');
 // TODO: Setup nodemailer transport here for sending OTP
 
 exports.googleAuth = (req, res, next) => {
+
     // This will be automatically handled by passport when the route is hit.
     // No need to implement anything here.
 };
@@ -51,7 +52,7 @@ exports.signup = async (req, res) => {
 
     await user.save();
 
-    // TODO: Send OTP logic using nodemailer
+    // TODO: Send OTP logic using nodemailer  // wait for it for now
     // Make sure to store the OTP for later verification
 
     res.status(200).json({ message: "Signup successful. Please verify the OTP sent to your email." });
@@ -97,8 +98,8 @@ exports.verifyOtp = (req, res) => {
 exports.logout = (req, res) => {
     // This would depend on how you're managing sessions.
     // For JWT, the client simply discards the token.
-    // If using sessions, you can use req.logout();
-
+    // If using sessions, you can use req.logout() to destroy the session.
+    
     req.logout();
     res.redirect('/');
 };
