@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const {isEmail} =require('validator');
 
 const userSchema = new mongoose.Schema({
     username: {
@@ -8,13 +9,20 @@ const userSchema = new mongoose.Schema({
     },
     email: {
         type: String,
+        lowercase: true, 
         required: true,
-        unique: true
+        unique: true ,
+        validate: [isEmail, 'Please enter a valid email']
     },
-    password: String, // Removed required: true as it's not needed for Google auth users
+    password: {
+        type: String,
+        minlength: [6 , 'Minimum password length is 6 characters']
+    }, // Removed required: true as it's not needed for Google auth users
     googleId: {
         type: String,
-        unique: true
+        unique: true , 
+        default: null
+        
     },
     subscription: {
         type: String,
@@ -28,5 +36,6 @@ const userSchema = new mongoose.Schema({
 }, {
     timestamps: true
 });
+
 
 module.exports = mongoose.model('User', userSchema);

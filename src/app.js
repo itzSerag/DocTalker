@@ -1,12 +1,12 @@
 const express = require('express');
-require('dotenv').config(); 
-const mongoose = require('mongoose');
+const dotenv = require('dotenv');
 const session = require('express-session');
 const passport = require('passport');
 const connectDB = require('../config/database');
 const morgan = require('morgan');   
 const PORT = process.env.PORT || 3000; 
 
+dotenv.config();
 const app = express();
 
 // Middleware for JSON and URL-encoded data
@@ -28,6 +28,7 @@ app.use(passport.session());
 // Routes
 const authRoutes = require('../routes/auth');
 const paymentRoutes = require('../routes/payment');
+const OTPRoutes = require('../routes/otp.js');
 
 
 // Home route
@@ -42,6 +43,7 @@ app.get('/', (req, res) => {
 // Mount routes
 app.use('/auth', authRoutes);
 app.use('/payment', paymentRoutes);
+app.use('/otp', OTPRoutes);
 
 
 

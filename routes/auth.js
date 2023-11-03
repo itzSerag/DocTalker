@@ -10,6 +10,9 @@ router.post('/login', authController.login);
 router.post('/verify', authController.verifyOtp);
 router.get('/logout', authController.logout);
 
+// check the username whle the user typing (live check)
+// router.get('api/checkUsername' , otpController.checkUsername);
+
 
 
 module.exports = router;

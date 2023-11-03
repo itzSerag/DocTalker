@@ -3,7 +3,11 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
 
-// TODO: Setup nodemailer transport here for sending OTP
+// TODO: 1 - Setup nodemailer transport here for sending OTP
+// TODO: 2 - Make error hanlding more robust (send json response with error message)
+
+
+
 
 exports.googleAuth = (req, res, next) => {
 
@@ -15,7 +19,7 @@ exports.googleRedirect = async (req, res) => {
     // After Google OAuth, we can either save user data or directly provide JWT.
     // This example assumes you want to save the user data.
 
-    const { id, displayName, emails } = req.user;
+    const { id, displayName, email } = req.user;
 
     let user = await User.findOne({ googleId: id });
     
@@ -23,7 +27,7 @@ exports.googleRedirect = async (req, res) => {
         user = new User({
             googleId: id,
             username: displayName,
-            email: emails[0].value
+            email: email[0].value
         });
 
         await user.save();
@@ -39,6 +43,10 @@ exports.signup = async (req, res) => {
     let user = await User.findOne({ email });
     if (user) {
         return res.status(400).json({ error: "Email already registered." });
+    }
+    let user2 = await User.findOne({ username });
+    if (user2) {
+        return res.status(400).json({ error: "username already exists." });
     }
 
     const salt = await bcrypt.genSalt(10);
