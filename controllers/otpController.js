@@ -6,8 +6,8 @@ const OTP = require('../models/OTP').OTP;
 const transporter = nodemailer.createTransport({
   service: 'hotmail',
   auth: {
-    user: 'mrnobody6222@gmail.com',
-    pass: 'Iamcomingharvard????333',
+    user: process.env.HOTMAIL_EMAIL,
+    pass: process.env.HOTMAIL_PASSWORD
   },
 });
 
@@ -45,6 +45,9 @@ exports.sendOtp = async (req, res) => {
     }
   });
 };
+
+
+// TODO : modify this
 
 // Function to verify OTP
 exports.verifyOtp = async (req, res) => {
