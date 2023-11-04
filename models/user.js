@@ -33,6 +33,7 @@ const userSchema = new mongoose.Schema({
         type: String, // Store the Stripe customer ID here (using it to integrate payment gateway)
         unique: true,
     },
+    isVerfied : Boolean , // if the user enters the right otp number
 }, {
     timestamps: true
 });

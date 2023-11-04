@@ -47,30 +47,43 @@ exports.sendOtp = async (req, res) => {
 };
 
 
-// TODO : modify this
 
-// Function to verify OTP
-exports.verifyOtp = async (req, res) => {
-  // Verify OTP logic here
-  const userOTP = req.query.otp; // Get the OTP from the request
-  const email = req.query.email; // Get the email address from the request
 
-  // Find the OTP document from the database that matches the email and otp
+
+// Define the verify function
+const verify = async (email, userOTP) => {
   try {
     const otpDoc = await OTP.findOne({ email: email, otp: userOTP });
     if (!otpDoc) {
-      return res.status(400).send('Invalid OTP');
+      return 'Invalid OTP';
     }
-    // Check if the OTP has expired
     if (Date.now() > otpDoc.otpExpiresIn) {
-      return res.status(400).send('OTP expired');
+      return 'OTP expired';
     }
-    // OTP is valid and not expired, respond with a success message
-    return res.status(200).send('OTP verified successfully');
+    return 'OTP verified successfully';
   } catch (error) {
+    return 'Failed to find OTP in the database';
+  }
+};
+
+exports.verifyOtp = async (req, res) => {
+  const { email, userOTP } = req.body;
+
+  const verificationResult = await verify(email, userOTP);
+
+  if (verificationResult === 'OTP verified successfully') {
+    return res.status(200).send('OTP verified successfully');
+  } else if (verificationResult === 'Invalid OTP') {
+    return res.status(400).send('Invalid OTP');
+  } else if (verificationResult === 'OTP expired') {
+    return res.status(400).send('OTP expired');
+  } else {
     return res.status(500).send('Failed to find OTP in the database');
   }
 };
+
+
+/////
 
 // Function to resend OTP via email
 exports.resendOtp = async (req, res) => {

@@ -28,7 +28,7 @@ app.use(passport.session());
 // Routes
 const authRoutes = require('../routes/auth');
 const paymentRoutes = require('../routes/payment');
-const OTPRoutes = require('../routes/otp.js');
+const otpRoutes = require('../routes/otpVerfication');
 
 
 // Home route
@@ -42,8 +42,8 @@ app.get('/', (req, res) => {
 
 // Mount routes
 app.use('/auth', authRoutes);
-app.use('/payment', paymentRoutes);
-app.use('/otp', OTPRoutes);
+app.use('/payment', paymentRoutes) ;
+app.use('/otp-verify' , otpRoutes) ;
 
 
 
