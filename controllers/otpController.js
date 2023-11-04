@@ -15,7 +15,7 @@ const transporter = nodemailer.createTransport({
 exports.sendOtp = async (req, res) => {
   // Generate and send OTP logic here
   const otp = generateOTP(); // Implement your OTP generation logic
-  const email = req.body.email; // Get the email address from the request
+  const email = req.body.email; // Get the email address from the body
 
   // Create a new OTP document and save it to the database
   const otpDoc = new OTP({
@@ -31,7 +31,7 @@ exports.sendOtp = async (req, res) => {
 
   // Send the OTP to the email address using Nodemailer
   const mailOptions = {
-    from: 'mrnobody6222@gmail.com',
+    from: process.env.HOTMAIL_EMAIL,
     to: email,
     subject: 'Your OTP for Authentication',
     text: `Your OTP is: ${otp}`,
