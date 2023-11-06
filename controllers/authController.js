@@ -1,7 +1,6 @@
 const User = require('../models/user');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
-const nodemailer = require('nodemailer');
 
 // TODO: 1 - Setup nodemailer transport here for sending OTP
 // TODO: 2 - Make error hanlding more robust (send json response with error message)
@@ -38,22 +37,19 @@ exports.googleRedirect = async (req, res) => {
 };
 
 exports.signup = async (req, res) => {
-    const { username, email, password } = req.body;
+    const { Fname , Lname, email, password } = req.body;
 
     let user = await User.findOne({ email });
     if (user) {
         return res.status(400).json({ error: "Email already registered." });
-    }
-    let user2 = await User.findOne({ username });
-    if (user2) {
-        return res.status(400).json({ error: "username already exists." });
     }
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
     user = new User({
-        username,
+        Fname,
+        Lname,
         email,
         password: hashedPassword
     });

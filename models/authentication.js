@@ -10,6 +10,7 @@ const AuthenticationSchema = new mongoose.Schema({
 const Authentication = mongoose.model('Authentication', AuthenticationSchema);
 
 
+
 // Function to remove expired tokens
 function removeExpiredTokens() {
    const now = new Date();

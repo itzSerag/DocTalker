@@ -18,11 +18,10 @@ const documentSchema = new mongoose.Schema({
         type: Array,
         required: true
     },
-    ocrText: String
+    ocrText: String,
 }, {
     timestamps: true
 });
-
 
 
 module.exports = mongoose.model('Document', documentSchema);
