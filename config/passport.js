@@ -1,29 +1,40 @@
 const passport = require('passport');
-const GoogleStrategy = require('passport-google-oauth20');
+const GoogleStrategy = require('passport-google-oauth2');
 const User = require('../models/user');
 
 
 
 passport.use(
-    new GoogleStrategy({
+    new GoogleStrategy(
+      {
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
         callbackURL: '/auth/google/redirect'
-    }, (accessToken, refreshToken, profile, done) => {
-
-        // -- CREATE THE LOGIC HERE --
-        // Check if user exists in our database
-        // If not, create a new user
-        // Return the user
-    })
-);
-
-passport.serializeUser((user, done) => {
-    done(null, user.id);
-});
-
-passport.deserializeUser((id, done) => {
-    User.findById(id).then((user) => {
-        done(null, user);
-    });
-});
+      },
+      async (accessToken, refreshToken, profile, done) => {
+        try {
+          // Check if a user with the same Google ID already exists in your database
+          let user = await User.findOne({ googleId: profile.id });
+  
+          if (user) {
+            // User already exists, return the user
+            return done(null, user);
+          } else {
+            // User doesn't exist, create a new user using Google profile information
+            user = new User({
+              googleId: profile.id,
+              Fname: profile.given_name,
+              Lname: profile.family_name,
+              email: profile.email,
+              // You can set other default values here as needed
+            });
+  
+            await user.save();
+            return done(null, user);
+          }
+        } catch (err) {
+          return done(err, false);
+        }
+      }
+    )
+  );

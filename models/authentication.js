@@ -1,3 +1,9 @@
+
+/// this is the model for the authentication token that will be used to verify the user
+// STILL DK HOW TO USE THIS
+// SHEKIB GONNA TELL US !!!!!
+
+
 const mongoose = require('mongoose');
 
 const AuthenticationSchema = new mongoose.Schema({

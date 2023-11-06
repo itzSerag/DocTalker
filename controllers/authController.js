@@ -21,6 +21,8 @@ const transporter = nodemailer.createTransport({
 
 exports.googleAuth = (req, res, next) => {
   // Implementation for Google OAuth (handled by Passport) can remain unchanged.
+
+  next();
 };
 
 exports.googleRedirect = async (req, res) => {

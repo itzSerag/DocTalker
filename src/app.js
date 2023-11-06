@@ -17,7 +17,7 @@ app.use(morgan('dev'));
 
 // Session middleware
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'secret',
+    secret: process.env.SESSION_SECRET || 'secret' ,
     resave: false,
     saveUninitialized: false
 }));
@@ -29,7 +29,7 @@ app.use(passport.session());
 // Routes
 const authRoutes = require('../routes/auth');
 const paymentRoutes = require('../routes/payment');
-const chatRoutes = require('../routes/chat') ;
+
 
 // Home route
 app.get('/', (req, res) => {
