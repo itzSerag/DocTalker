@@ -25,7 +25,7 @@ const userSchema = new mongoose.Schema({
     },
     googleId: {
         type: String,
-        unique: true,
+        unique: true,  // idk if this is needed -- google already gives unique IDs
         default: null
     },
     subscription: {
@@ -45,8 +45,11 @@ const userSchema = new mongoose.Schema({
     User_Chats: [
         {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Chat'
-            
+            ref: 'Chat' ,
+            createdAt: {
+                type : Date,
+                default : Date.now()
+            }
         }
     ]
     },

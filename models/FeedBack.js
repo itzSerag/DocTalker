@@ -9,8 +9,20 @@ const feedbackSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Chat'
     },
+
+    messageID : {
+        type : mongoose.Schema.Types.ObjectId,
+        required : true ,
+    },
     
-    feedbackMessage: String
+    feedbackMessage: {
+        type :String ,
+        required : true ,
+        createdAt : {
+            type : Date,
+            default : Date.now()
+        }
+    },
 }, {
     timestamps: true
 });

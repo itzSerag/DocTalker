@@ -25,12 +25,23 @@ const chatSchema = new mongoose.Schema({
     },
     messages: [
         {   
-            messagesID : {
+            messageID : {
                 type : mongoose.Schema.Types.ObjectId,
-                ref : 'Message'
+                required : true
             },
-            query : String,
-            response : String,
+            query : {
+                type :String,
+                required : true
+            },
+            response : {
+                type : String,
+                required : true
+            },
+
+            createdAt : {
+                type : Date,
+                default : Date.now()
+            }   
             
         }
     ],

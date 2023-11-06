@@ -7,11 +7,11 @@ router.get('/google', authController.googleAuth);
 router.get('/google/redirect', authController.googleRedirect);
 router.post('/signup', authController.signup);
 router.post('/login', authController.login);
-router.post('/verify', authController.verifyOtp);
 router.get('/logout', authController.logout);
+router.post('/otp/verify', authController.verifyOtp);
+router.post('/otp/resend', authController.resendOtp);
 
-// check the username whle the user typing (live check)
-// router.get('api/checkUsername' , otpController.checkUsername);
+// router.post('/forgot-password', authController.forgotPassword);  -- > Later
 
 
 

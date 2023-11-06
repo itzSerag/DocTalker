@@ -3,7 +3,8 @@ const dotenv = require('dotenv');
 const session = require('express-session');
 const passport = require('passport');
 const connectDB = require('../config/database');
-const morgan = require('morgan');   
+const morgan = require('morgan');
+
 const PORT = process.env.PORT || 3000; 
 
 dotenv.config();
@@ -28,8 +29,7 @@ app.use(passport.session());
 // Routes
 const authRoutes = require('../routes/auth');
 const paymentRoutes = require('../routes/payment');
-const otpRoutes = require('../routes/otpVerfication');
-
+const chatRoutes = require('../routes/chat') ;
 
 // Home route
 app.get('/', (req, res) => {
@@ -43,7 +43,7 @@ app.get('/', (req, res) => {
 // Mount routes
 app.use('/auth', authRoutes);
 app.use('/payment', paymentRoutes) ;
-app.use('/otp-verify' , otpRoutes) ;
+// app.use('/chat' , chatRoutes ) ;
 
 
 
