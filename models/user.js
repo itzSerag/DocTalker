@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 const { isEmail } = require('validator');
 
+
+
 const userSchema = new mongoose.Schema({
     Fname: {
         type: String,
@@ -17,11 +19,12 @@ const userSchema = new mongoose.Schema({
         lowercase: true,
         required: true,
         unique: true,
+        
         validate: [isEmail, 'Please enter a valid email']
     },
     password: {
         type: String,
-        minlength: [6, 'Minimum password length is 6 characters']
+        // minlength: [6, 'Minimum password length is 6 characters']
     },
     googleId: {
         type: String,

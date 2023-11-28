@@ -2,7 +2,7 @@ const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth2');
 const User = require('../models/user');
 
-
+// SHKIB WILL TELL US
 
 passport.use(
     new GoogleStrategy(

@@ -13,7 +13,7 @@ const transporter = nodemailer.createTransport({
       pass: process.env.HOTMAIL_PASSWORD, // Replace with your password
     },
   });
-  //
+  ///////
 
 
 

@@ -1,24 +1,27 @@
 const mongoose = require('mongoose');
 
 const documentSchema = new mongoose.Schema({
-    userID: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
-    },
     name: {
         type: String,
         required: true
     },
-    file: {
+    fileUrl: {
         type: String,
         required: true
     },
-    embedding: {
-        type: Array,
+    ocrText: {
+        type: String,
+        default: ' -- DIDNT RUN OCR YET -- '
+    },
+    vectorIndex: {
+        type: String,
         required: true
     },
-    ocrText: String,
+    isProcessed: {
+        type: Boolean,
+        default: false
+    }
+
 }, {
     timestamps: true
 });

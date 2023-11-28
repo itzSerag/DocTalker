@@ -5,6 +5,7 @@ const passport = require('passport');
 const connectDB = require('../config/database');
 const morgan = require('morgan');
 
+
 const PORT = process.env.PORT || 3000; 
 
 dotenv.config();
@@ -29,6 +30,8 @@ app.use(passport.session());
 // Routes
 const authRoutes = require('../routes/auth');
 const paymentRoutes = require('../routes/payment');
+const uploadRoute = require('../routes/upload');
+const queryRoute = require('../routes/query');
 
 
 // Home route
@@ -43,8 +46,8 @@ app.get('/', (req, res) => {
 // Mount routes
 app.use('/auth', authRoutes);
 app.use('/payment', paymentRoutes) ;
-// app.use('/chat' , chatRoutes ) ;
-
+app.use('/upload', uploadRoute);
+app.use('/query', queryRoute);
 
 
 // start the DB connection before starting the app
