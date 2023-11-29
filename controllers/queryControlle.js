@@ -1,6 +1,6 @@
 const {Pinecone} = require('@pinecone-database/pinecone');
-const { initialize } = require('@/src/pinecone');
-const { getCompletion, getEmbeddings } = require('@/src/openaiServices');
+const { getCompletion} = require('../services/openAi');
+const {getEmbeddings} = require('../services/huggingFace');
 const { connectDB } = require('../config/database');
 const DocumentModel = require('../models/Document');
 
@@ -17,7 +17,7 @@ async function initialize() {
     return pinecone;
 }
 
-const pinecone = await initialize();
+// const pinecone = await initialize();
 
 module.exports = async function handler(req, res) {
   // 1. check for POST call

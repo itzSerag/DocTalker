@@ -1,4 +1,5 @@
-const PDFJS = require('pdfjs-dist/legacy/build/pdf');
+const { PDFJS } = require('pdfjs-dist/legacy/build/pdf.min.mjs');
+
 const DocumentModel = require('../models/Document');
 const { connectDB } = require('../config/database');
 const { getEmbeddings } = require('../services/hugginface');

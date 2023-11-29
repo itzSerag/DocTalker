@@ -2,7 +2,6 @@ const formidable = require('formidable-serverless');
 const { connectDB } = require('../config/database');
 const DocumentModel = require('../models/Document');
 const slugify = require('slugify');
-const {initialization} = require('../config/pinecone');
 const {Pinecone} = require('@pinecone-database/pinecone');
 const { s3Upload } = require('../services/aws');
 
@@ -17,6 +16,8 @@ async function initialize() {
     })
     return pinecone;
 }
+
+ const pinecone = initialize();
 
 
 
@@ -85,10 +86,10 @@ exports.handler = async (req, res) => {
         strict: true,
       });
 
-      await initialization(); 
+      await initialize(); 
 
       // 6. create a pinecone index
-      await createIndex(filenameSlug); // create index
+     createIndex(filenameSlug); // create index
 
       // 7. save file info to the mongodb db
       const myFile = new DocumentModel({
