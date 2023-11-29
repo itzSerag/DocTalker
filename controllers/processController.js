@@ -1,10 +1,10 @@
-const { PDFJS } = require('pdfjs-dist/legacy/build/pdf.min.mjs');
+const pdfParse = require('pdf-parse');
 
 const DocumentModel = require('../models/Document');
 const { connectDB } = require('../config/database');
-const { getEmbeddings } = require('../services/hugginface');
+const { getEmbeddings } = require('../services/huggingface');
 const  {Pinecone} = require('@pinecone-database/pinecone');
-const { RecursiveCharacterTextSplitter } = require("langchain/text_splitter");
+const { RecursiveCharacterTextSplitter } = require('langchain/text_splitter')
 const mammoth = require("mammoth"); // For handling .docx files
 const fs = require("fs/promises");
 
@@ -54,19 +54,23 @@ exports.handler = async (req, res) => {
 
     if (myFile.fileUrl.endsWith('.pdf')) {
       // For PDF files
-      let pdfDoc = await PDFJS.getDocument(await myFiledata.arrayBuffer()).promise;
-      const numPages = pdfDoc.numPages;
-      let pdfText = '';
+      const pdfData = await fetch(myFile.fileUrl);
+      const buffer = await pdfData.arrayBuffer();
 
-      for (let i = 0; i < numPages; i++) {
-        let page = await pdfDoc.getPage(i + 1);  // important 
+      // extract text from pdf
+      const pdfText = await pdfParse(buffer);
+
+      // TODO : CHECK IF THE USER IS FREE OR NOT TO SPECIFIC PAGES NUMBER
+      // for (let i = 0; i < numPages; i++) {
+      //   let page = await pdfDoc.getPage(i + 1);  // important 
 
 		// TODO : CHECK IF THE USER IS FREE OR NOT TO SPECIFIC PAGES NUMBER
 
-        let textContent = await page.getTextContent();
-        pdfText += textContent.items.map(item => item.str).join(''); // removes the extra spaces
-      }
-      documentContent = pdfText;
+      // TODO : REMOVE EXTRA SPACES
+      //   pdfText += textContent.items.map(item => item.str).join(''); 
+      // }
+
+      documentContent = pdfText.text;
 
     } else if (myFile.fileUrl.endsWith('.docx')) {
       // For Word documents (.docx)

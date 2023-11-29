@@ -9,7 +9,7 @@ const embeddings = new HuggingFaceInferenceEmbeddings({
 // Get the embeddings of Chunks
 // JUST ONE FUNCTION TO MAKE IT EASY
 
-export async function getEmbeddings(content) {
+exports.getEmbeddings = async (content) => {
   if (Array.isArray(content)) {
     // If content is an array, assume it's an array of documents
     return embeddings.embedDocuments(content);
