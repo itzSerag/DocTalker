@@ -1,60 +1,48 @@
-const { S3, PutObjectCommand } = require("@aws-sdk/client-s3");
-const { Readable } = require("stream");
-const fs = require("fs");
+const { S3Client, DeleteObjectCommand , } = require("@aws-sdk/client-s3");
+const {Upload} = require('@aws-sdk/lib-storage');
 
-const s3 = new S3({
+
+
+/// NOTE THE ALLOWED OPERATIONS FOR THE S3 CLIENT IS DELETE AND UPLOAD ONLY
+/// FILE KEY IS THE NAME OF THE FILE -- key is the name of the file in the bucket -- حنيكه
+
+
+// AWS config
+const s3 = new S3Client({
+  region: process.env.AWS_BUCKET_REGION,
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_ID,
-    secretAccessKey: process.env.AWS_ACCESS_KEY,
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   },
-  region: 'us-east-1',
+  
+
 });
 
-exports.s3Upload = async (bucket, file) => {
-  const stream = fs.createReadStream(file.path);
+exports.uploadFile = async (fileKey , fileBody , fileType) =>{
 
-  const params = {
-    Bucket: bucket,
-    Key: file.name,
-    Body: Readable.from(stream),
-  };
+  const upload = new Upload({
+    client: s3,
+    params: {
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: fileKey,
+      Body: fileBody,
+      ContentType: fileType,
+    },
+  });
 
-  const uploadCommand = new PutObjectCommand(params);
+  let data = await upload.done()
+  return data.Location
+  
+}
 
-  try {
-    const response = await s3.send(uploadCommand);
-    console.log("File uploaded successfully:", response);
-    return response;
-  } catch (error) {
-    console.error("Error uploading file:", error);
-    throw error;
-  } finally {
-    // Close the stream after upload
-    stream.close();
-  }
-};
+exports.deleteFile = async (fileKey) => {
 
+  const deleteObject = new DeleteObjectCommand({
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: fileKey,
+  });
 
-
-
-
-// v2 aws
-
-// const AWS = require("aws-sdk");
-// const fs = require("fs");
-
-// const s3 = new AWS.S3({
-//   accessKeyId: process.env.AWS_ACCESS_ID,
-//   secretAccessKey: process.env.AWS_ACCESS_KEY,
-//   region: 'us-east-1',
-// });
-
-// exports.s3Upload = async (bucket, file) => {
-//   const params = {
-//     Bucket: bucket,
-//     Key: file.name,
-//     Body: fs.createReadStream(file.path),
-//   };
-
-//   return await s3.upload(params).promise();
-// };
+  let data = await s3.send(deleteObject)
+  return data.DeleteMarker
+  
+}

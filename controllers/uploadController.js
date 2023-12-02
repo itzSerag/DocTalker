@@ -1,115 +1,128 @@
-const formidable = require('formidable-serverless');
 const { connectDB } = require('../config/database');
-const DocumentModel = require('../models/Document');
+const Doc = require('../models/Document');
 const slugify = require('slugify');
 const {Pinecone} = require('@pinecone-database/pinecone');
-const { s3Upload } = require('../services/aws');
+const multer = require('multer');
+const {uploadFile} = require('../services/aws');
+const {deleteFile}  = require('../services/aws');
 
 
 
 // pinecone config
 // TODO : ADD THE PINECONE CONFIG TO CONFIGs/PINECONE.JS
-async function initialize() {
-    const pinecone = new Pinecone({
-        environment: process.env.PDB_ENV,
-        apiKey: process.env.PDB_KEY,
-    })
-    return pinecone;
-}
-
- const pinecone = initialize();
-
 
 
 // Function to create a pinecone index  (helper function)
-const createIndex = async (indexName) => {
 
-  const indexes = pinecone.listIndexes()
-
-  if (!indexes.includes(indexName)) {
-    await pinecone.createIndex({
-      createRequest: {
-        name: indexName,
-        dimension: 768, 
-      },
-    });
-    console.log('index created');
-  } else {
-    throw new Error(`Index with name ${indexName} already exists`);
-  }
-};
 
 
 ///////////
 
 
+
 // Uploading a file to S3 and creating a pinecone index
 exports.handler = async (req, res) => {
 
+  const file = req.file
+
   // 1. only allow POST methods
   if (req.method !== 'POST') {
-    return res.status(400).send('method not supported');
+      return res.status(400).send('method not supported');
   }
 
+  // check if the file pdf and its exist
+
+
   try {
-    // 2. connect to the mongodb db
-    await connectDB();
+      // 2. connect to the mongodb db
 
-    // 3. parse the incoming FormData
-    let form = new formidable.IncomingForm();
-
-    form.parse(req, async (error, fields, files) => {
-      if (error) {
-        console.error('Failed to parse form data:', error);
-        return res.status(500).json({ error: 'Failed to parse form data' });
-      }
-
-      const file = files.file;
+      await connectDB()
+          .then(() => {
+              console.log("db conntected in upload phaseS");
+          });
 
       // Check if the file object exists
       if (!file) {
-        return res.status(400).json({ error: 'No file uploaded' });
+        return res.status(400).json({
+            error: 'No file uploaded'
+        });
       }
+     
+      console.log(file);
+
+      
+      // check if the file is pdf
+      if (file.mimetype !== 'application/pdf') {
+          res.json({
+              error: 'Only PDF files are allowed.'
+          });
+      }
+
+      else {
 
       // Check if the necessary file properties are available
-      if (!file.name || !file.path || !file.type) {
-        return res.status(400).json({ error: 'Invalid file data' });
-      }
 
       // 4. upload the file to s3
-      let data = await s3Upload(process.env.S3_BUCKET, file);
+      const dataLocation = await uploadFile(file.originalname, file.buffer, file.mimetype)
+      
+      
+
+
 
       // 5. initialize pinecone // initialize pinecone name index
-      const filenameWithoutSpecial = file.name.split('.')[0];
+      const filenameWithoutSpecial = file.originalname.split('.')[0];
       const filenameSlug = slugify(filenameWithoutSpecial, {
-        lower: true,
-        strict: true,
+          lower: true,
+          strict: true,
       });
 
-      await initialize(); 
+      const pinecone = new Pinecone({
+        environment: process.env.PDB_ENV,
+        apiKey: process.env.PDB_KEY,
+    })
 
-      // 6. create a pinecone index
-     createIndex(filenameSlug); // create index
+      // 6. create a pinecone index and check if it exists
+
+
+      const indexes = await pinecone.listIndexes()
+
+      if (!indexes.includes(filenameSlug)) {
+          await pinecone.createIndex({
+                name: filenameSlug,
+                dimension: 768,
+                metric: 'cosine',
+      
+          });
+          console.log('index created');
+      } else {
+          throw new Error(`Index with name ${filenameSlug} already exists`);
+      }
 
       // 7. save file info to the mongodb db
-      const myFile = new DocumentModel({
-        fileName: file.name,
-        fileUrl: data.Location,
-        vectorIndex: filenameSlug,
+
+      const myFile = new Doc({
+          fileName: file.originalname,
+          fileUrl: dataLocation, // aws file url
+          vectorIndex: filenameSlug,
       });
-      await myFile.save();
+
+      await myFile.save()
+      .then(() => {console.log("file successfully saved in mongo db")})
+      .catch((err) => {console.log("file faild to save on mongo db" ,err)});
       // await disconnectDB()
+
 
       // 8. return the success response
       return res.status(200).json({
-        message: 'File uploaded to S3 and index created',
+          message: 'File uploaded to S3 and index created',
       });
-    });
+      };
+
   } catch (e) {
-    console.log('--error--', e);
-    // await disconnectDB()
-    return res.status(500).send({
-      message: e.message,
-    });
+      console.log('--error--', e);
+      // await disconnectDB()
+      return res.status(500).send({
+          message: e.message,
+      });
   }
-};
+}

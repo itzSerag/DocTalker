@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const documentSchema = new mongoose.Schema({
-    name: {
+    fileName: {
         type: String,
         required: true
     },
@@ -11,7 +11,7 @@ const documentSchema = new mongoose.Schema({
     },
     ocrText: {
         type: String,
-        default: ' -- DIDNT RUN OCR YET -- '
+        default:"  -- DIDNT RUN OCR YET -- "
     },
     vectorIndex: {
         type: String,

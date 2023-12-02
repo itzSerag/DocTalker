@@ -1,5 +1,4 @@
 const pdfParse = require('pdf-parse');
-
 const DocumentModel = require('../models/Document');
 const { connectDB } = require('../config/database');
 const { getEmbeddings } = require('../services/huggingface');
@@ -11,13 +10,7 @@ const fs = require("fs/promises");
 
 // pinecone config
 // TODO : ADD THE PINECONE CONFIG TO CONFIGs/PINECONE.JS
-async function initialize() {
-    const pinecone = new Pinecone({
-        environment: process.env.PDB_ENV,
-        apiKey: process.env.PDB_KEY,
-    })
-    return pinecone;
-}
+
 
 
 exports.handler = async (req, res) => {
@@ -44,15 +37,17 @@ exports.handler = async (req, res) => {
     }
 
     // Initialize RecursiveCharacterTextSplitter
-    const text_splitter = new RecursiveCharacterTextSplitter({
+    const splitter = new RecursiveCharacterTextSplitter({
       chunkSize: 512,
       chunkOverlap: 30,
     });
 
     // 4. Read the document content based on file extension
     let documentContent;
+    const myFileUrlString = myFile.fileUrl
 
-    if (myFile.fileUrl.endsWith('.pdf')) {
+
+    if (myFileUrlString.endsWith('.pdf')) {
       // For PDF files
       const pdfData = await fetch(myFile.fileUrl);
       const buffer = await pdfData.arrayBuffer();
@@ -71,6 +66,8 @@ exports.handler = async (req, res) => {
       // }
 
       documentContent = pdfText.text;
+      console.log(documentContent);
+      //
 
     } else if (myFile.fileUrl.endsWith('.docx')) {
       // For Word documents (.docx)
@@ -93,7 +90,7 @@ exports.handler = async (req, res) => {
     }
 
     // Chunk the text using RecursiveCharacterTextSplitter
-    const chunks = text_splitter.splitText(documentContent);
+    const chunks = await splitter.splitText(documentContent);
 
     // 5. Get embeddings for each chunk
     let vectors = [];
@@ -102,27 +99,29 @@ exports.handler = async (req, res) => {
 
       // 6. push to vector array
       vectors.push({
-        id: `chunk${chunks.indexOf(chunk) + 1}`,
+        id: `chunk${chunks.indexOf(chunk)}`,
         values: embedding,
         metadata: {
-          chunkNum: chunks.indexOf(chunk) + 1,
+          chunkNum: chunks.indexOf(chunk) ,
           text: chunk,
         },
       });
     }
 
+  
     // 7. initialize pinecone
-    const pinecone = await initialize(); // initialize pinecone
+    const pinecone = new Pinecone({
+      environment: process.env.PDB_ENV,
+      apiKey: process.env.PDB_KEY,
+     }); // initialize pinecone
 
     // 8. connect to the index
     const index = pinecone.Index(myFile.vectorIndex);
 
     // 9. upsert to pinecone index
-    await index.upsert({
-      upsertRequest: {
-        vectors,
-      },
-    });
+     console.log(vectors);
+
+    await index.upsert(vectors);
 
     // 10. update mongodb with isProcessed to true
     myFile.isProcessed = true;

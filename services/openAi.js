@@ -9,18 +9,9 @@ const OPEN_AI_COMPLETION_MODEL = "gpt-3.5-turbo";
 exports.getCompletion = async (prompt) => {
   const completion = await openai.chat.completions.create({
     model: OPEN_AI_COMPLETION_MODEL,
-    max_tokens : 500 ,
-    messages: [
-      {
-      data: prompt,
-      type: "string",
-      },
-    ],
+    messages: [{ role: 'user', content: prompt }] ,
   
   });
 
-  console.log(completion.choices[0]);
-
   return completion.choices[0].message.content;
-  ;
 };
