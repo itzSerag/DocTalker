@@ -5,7 +5,14 @@ const rawApiUrl = (import.meta.env.VITE_API || "").trim();
 
 export const getApiBaseUrl = (): string => {
   if (!rawApiUrl) return "/api";
-  const sanitized = rawApiUrl.replace(/\/+$/, "");
+  let sanitized = rawApiUrl.replace(/\/+$/, "");
+  if (
+    !sanitized.startsWith("http://") &&
+    !sanitized.startsWith("https://") &&
+    !sanitized.startsWith("/")
+  ) {
+    sanitized = `http://${sanitized}`;
+  }
   return sanitized.endsWith("/api") ? sanitized : `${sanitized}/api`;
 };
 

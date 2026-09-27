@@ -11,44 +11,50 @@
 
 /* ─── Design Tokens ──────────────────────────────────────── */
 :root {
-  /* Backgrounds */
-  --color-canvas:     #080C14;
-  --color-base:       #0C1018;
-  --color-surface-0:  #111827;
-  --color-surface-1:  #1A2235;
-  --color-surface-2:  #232D42;
-  --color-surface-3:  #2C3A52;
-  --color-input:      #0E1421;
+  /* Backgrounds: Obsidian & Slate Layers */
+  --color-canvas:     #0A0E17;
+  --color-base:       #0F1523;
+  --color-surface-0:  #141B2D;
+  --color-surface-1:  #1B243B;
+  --color-surface-2:  #24304D;
+  --color-surface-3:  #2F3E63;
+  --color-input:      #0C111C;
 
-  /* Brand — Indigo */
-  --color-brand-50:  #EEF2FF;
-  --color-brand-100: #E0E7FF;
-  --color-brand-300: #A5B4FC;
-  --color-brand-400: #818CF8;
-  --color-brand-500: #6366F1;
-  --color-brand-600: #4F46E5;
-  --color-brand-700: #4338CA;
-  --color-brand-800: #3730A3;
-  --color-brand-900: #1E1B4B;
-  --color-brand-950: #13103A;
+  /* Brand — Royal Cobalt / Electric Sapphire */
+  --color-brand-50:  #EFF6FF;
+  --color-brand-100: #DBEAFE;
+  --color-brand-300: #93C5FD;
+  --color-brand-400: #60A5FA;
+  --color-brand-500: #3B82F6;
+  --color-brand-600: #2563EB;
+  --color-brand-700: #1D4ED8;
+  --color-brand-800: #1E40AF;
+  --color-brand-900: #1E3A8A;
+  --color-brand-950: #0F172A;
+
+  /* Editorial Accents */
+  --color-amber-400: #FBBF24;
+  --color-amber-500: #F59E0B;
+  --color-emerald-400: #34D399;
+  --color-emerald-500: #10B981;
 
   /* Functional */
   --color-success: #10B981;
   --color-warning: #F59E0B;
-  --color-danger:  #F43F5E;
+  --color-danger:  #EF4444;
   --color-info:    #0EA5E9;
 
   /* Text */
-  --color-text-primary:   #F1F5F9;
+  --color-text-primary:   #F8FAFC;
   --color-text-secondary: #94A3B8;
   --color-text-muted:     #64748B;
   --color-text-disabled:  #334155;
 
   /* Borders */
-  --color-border-hairline: rgba(255,255,255,0.04);
-  --color-border-subtle:   rgba(255,255,255,0.07);
-  --color-border-default:  rgba(255,255,255,0.12);
-  --color-border-strong:   rgba(255,255,255,0.22);
+  --color-border-hairline: rgba(255,255,255,0.06);
+  --color-border-subtle:   rgba(255,255,255,0.10);
+  --color-border-default:  rgba(255,255,255,0.15);
+  --color-border-strong:   rgba(255,255,255,0.26);
 
   /* Shadows */
   --shadow-xs:       0 1px 2px rgba(0,0,0,0.5);
@@ -56,8 +62,8 @@
   --shadow-md:       0 8px 24px rgba(0,0,0,0.5);
   --shadow-lg:       0 20px 60px rgba(0,0,0,0.6);
   --shadow-xl:       0 32px 80px rgba(0,0,0,0.7);
-  --shadow-brand-sm: 0 4px 14px rgba(99,102,241,0.25);
-  --shadow-brand-md: 0 8px 28px rgba(99,102,241,0.35);
+  --shadow-brand-sm: 0 4px 14px rgba(37,99,235,0.30);
+  --shadow-brand-md: 0 8px 28px rgba(37,99,235,0.40);
 
   /* Radius */
   --radius-xs:   4px;
@@ -438,7 +444,7 @@ img, svg {
   padding-left: calc(12px - 2px);
 }
 
-/* ─── Citation Chip ──────────────────────────────────────── */
+/* ─── Citation Chip (Scholarly Annotation) ───────────────── */
 .citation-chip {
   display: inline-flex;
   align-items: center;
@@ -448,15 +454,16 @@ img, svg {
   font-weight: 600;
   cursor: pointer;
   padding: 3px 10px;
-  background: rgba(99,102,241,0.1);
-  border: 1px solid rgba(99,102,241,0.22);
-  color: var(--color-brand-300);
-  transition: background var(--transition-fast), border-color var(--transition-fast);
+  background: rgba(245, 158, 11, 0.10);
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  color: var(--color-amber-400);
+  transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
 }
 .citation-chip:hover {
-  background: rgba(99,102,241,0.2);
-  border-color: rgba(99,102,241,0.4);
+  background: rgba(245, 158, 11, 0.22);
+  border-color: rgba(245, 158, 11, 0.50);
   color: #fff;
+  transform: translateY(-1px);
 }
 
 /* ─── Toolbar Button ─────────────────────────────────────── */

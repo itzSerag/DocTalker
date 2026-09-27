@@ -133,7 +133,7 @@ const envSchema = Joi.object({
     OPENAI_API_KEY: Joi.string().allow('').optional(),
     OPENAI_MODEL: Joi.string().default('gpt-4o-mini'),
     GEMINI_API_KEY: Joi.string().allow('').optional(),
-    GEMINI_MODEL: Joi.string().default('gemini-3.5-flash'),
+    GEMINI_MODEL: Joi.string().default('gemini-3.8-flash'),
     HUGGING_FACE_KEY: Joi.string().allow('').optional(),
     HUGGINGFACE_EMBEDDING_MODEL: Joi.string().default('sentence-transformers/all-MiniLM-L6-v2'),
 

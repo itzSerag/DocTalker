@@ -108,8 +108,14 @@ export const chatApi = {
   ) => {
     // We use native fetch to handle the stream
     const baseURL = apiClient.defaults.baseURL || "/api";
+    const normalizedBase =
+      baseURL.startsWith("http://") ||
+      baseURL.startsWith("https://") ||
+      baseURL.startsWith("/")
+        ? baseURL
+        : `http://${baseURL}`;
     const token = localStorage.getItem("token");
-    const response = await fetch(`${baseURL}/query/query-stream`, {
+    const response = await fetch(`${normalizedBase}/query/query-stream`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

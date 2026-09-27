@@ -32,8 +32,8 @@ interface ChatPanelProps {
 }
 
 const MODEL_OPTIONS = [
-  { id: "openai", label: "GPT-4o", badge: "Fast" },
-  { id: "gemini-text", label: "Gemini 2.5", badge: "Smart" },
+  { id: "openai", label: "OpenAI GPT-4o", badge: "Fast" },
+  { id: "gemini-text", label: "Gemini 3.5 Flash", badge: "Multimodal" },
 ];
 
 interface MessageBubbleProps {
@@ -45,8 +45,13 @@ function renderMarkdown(text: string): string {
   return text
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/\*(.+?)\*/g, "<em>$1</em>")
-    .replace(/\n\n/g, "</p><p>")
-    .replace(/\n\* /g, "</p><ul><li>")
+    .replace(
+      /`([^`]+)`/g,
+      "<code class='bg-surface-3/80 text-brand-300 px-1.5 py-0.5 rounded text-xs font-mono'>$1</code>",
+    )
+    .replace(/\n\n/g, "</p><p class='mt-2.5'>")
+    .replace(/\n\* /g, "</p><ul class='list-disc pl-5 my-2 space-y-1'><li>")
+    .replace(/\n- /g, "</p><ul class='list-disc pl-5 my-2 space-y-1'><li>")
     .replace(/\n/g, "<br/>");
 }
 
@@ -56,6 +61,10 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
   const isUser = msg.role === "user";
+  const isError =
+    !isUser &&
+    (msg.content.toLowerCase().includes("fetch failed") ||
+      msg.content.toLowerCase().includes("could not be generated"));
 
   const handleCopy = () => {
     navigator.clipboard.writeText(msg.content);
@@ -67,68 +76,54 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     <div
       className={`flex gap-3 group ${isUser ? "flex-row-reverse" : "flex-row"}`}
     >
-      {/* Avatar */}
+      {/* Sender Avatar */}
       <div
-        className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5"
-        style={{
-          background: isUser
-            ? "var(--color-brand-900)"
-            : "var(--color-surface-2)",
-          border: `1px solid ${isUser ? "rgba(99,102,241,0.3)" : "var(--color-border-subtle)"}`,
-        }}
+        className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 text-xs font-semibold ${
+          isUser
+            ? "bg-surface-2 border border-white/10 text-slate-300"
+            : "bg-brand-500/10 border border-brand-400/20 text-brand-300"
+        }`}
       >
-        {isUser ? (
-          <User size={12} style={{ color: "var(--color-brand-300)" }} />
-        ) : (
-          <Bot size={12} style={{ color: "var(--color-brand-400)" }} />
-        )}
+        {isUser ? <User size={13} /> : <Bot size={13} />}
       </div>
 
       {/* Bubble Content */}
       <div
-        className={`flex flex-col gap-1.5 max-w-[82%] ${isUser ? "items-end" : "items-start"}`}
+        className={`flex flex-col gap-1.5 max-w-[85%] ${isUser ? "items-end" : "items-start"}`}
       >
         <div className="flex items-center gap-2">
-          <span
-            className="text-2xs font-semibold"
-            style={{ color: "var(--color-text-muted)" }}
-          >
+          <span className="text-[11px] font-medium text-slate-400">
             {isUser ? "You" : "DocTalker AI"}
           </span>
           {msg.model && !isUser && (
-            <span
-              className="text-2xs font-mono px-1.5 py-0.5 rounded-full"
-              style={{
-                background: "var(--color-surface-2)",
-                color: "var(--color-text-secondary)",
-              }}
-            >
-              {msg.model}
+            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-surface-2/80 text-slate-400 border border-white/5">
+              {msg.model === "openai" ? "GPT-4o" : "Gemini"}
             </span>
           )}
         </div>
 
-        {/* Text */}
+        {/* Text Container */}
         <div
-          className={`rounded-md text-xs leading-relaxed ${
-            isUser ? "px-3.5 py-2.5 text-white" : "px-4 py-3"
+          className={`text-sm leading-relaxed rounded-2xl ${
+            isUser
+              ? "bg-surface-2/90 border border-white/10 text-slate-100 px-4 py-3 rounded-tr-xs shadow-sm"
+              : isError
+                ? "bg-red-950/20 border border-red-500/30 text-red-200 px-4 py-3 rounded-tl-xs"
+                : "bg-surface-0/90 border border-white/[0.08] text-slate-200 px-4 py-3.5 rounded-tl-xs shadow-sm"
           }`}
-          style={{
-            background: isUser
-              ? "var(--color-brand-600)"
-              : "var(--color-surface-1)",
-            border: isUser ? "none" : "1px solid var(--color-border-subtle)",
-            color: isUser ? "#ffffff" : "var(--color-text-primary)",
-            boxShadow: isUser
-              ? "var(--shadow-brand-sm)"
-              : "var(--shadow-surface-card)",
-          }}
         >
           {isUser ? (
             <p className="whitespace-pre-wrap">{msg.content}</p>
+          ) : isError ? (
+            <div className="space-y-1.5">
+              <p className="font-semibold text-xs text-red-400 flex items-center gap-1.5">
+                <span>Query failed</span>
+              </p>
+              <p className="text-xs text-red-300/80">{msg.content}</p>
+            </div>
           ) : (
             <div
-              className="prose prose-invert prose-xs max-w-none [&>p]:mb-2 [&>ul]:list-disc [&>ul]:pl-4 [&>ul]:mb-2 [&>strong]:text-indigo-300"
+              className="prose prose-invert prose-sm max-w-none text-slate-200 [&>p]:leading-relaxed [&>strong]:text-white [&>strong]:font-semibold"
               dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }}
             />
           )}
@@ -136,38 +131,33 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
 
         {/* Citations */}
         {msg.citations && msg.citations.length > 0 && (
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span
-              className="text-2xs font-semibold"
-              style={{ color: "var(--color-text-disabled)" }}
-            >
-              Sources
+          <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              Sources:
             </span>
             {msg.citations.map((c, i) => (
               <button
                 key={i}
                 onClick={() => onCitationClick(c.page ?? 1)}
-                className="citation-chip"
+                className="citation-chip inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-300 border border-amber-500/20 hover:bg-amber-500/20 transition"
                 title={c.snippet}
               >
                 <FileText size={10} />
-                <span>p.{c.page}</span>
+                <span>Page {c.page}</span>
               </button>
             ))}
           </div>
         )}
 
-        {/* Copy button (assistant only) */}
-        {!isUser && (
+        {/* Copy button */}
+        {!isUser && !isError && (
           <button
             onClick={handleCopy}
-            className="flex items-center gap-1.5 text-2xs font-medium opacity-0 group-hover:opacity-100 transition-opacity"
-            style={{ color: "var(--color-text-muted)" }}
+            className="flex items-center gap-1.5 text-[11px] font-medium text-slate-500 hover:text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity pt-0.5"
           >
             {copied ? (
               <>
-                <Check size={11} style={{ color: "var(--color-success)" }} />{" "}
-                Copied
+                <Check size={11} className="text-emerald-400" /> Copied
               </>
             ) : (
               <>
@@ -212,6 +202,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   const [loading, setLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState("openai");
   const [showModelMenu, setShowModelMenu] = useState(false);
+  const [showAttachMenu, setShowAttachMenu] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -283,22 +274,20 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       const decoder = new TextDecoder("utf-8");
       if (!reader) throw new Error("No stream reader available");
 
-      let botMessageIndex = -1;
+      const botMessageId = `assistant-${Date.now()}`;
       let buffer = "";
 
-      // Add a placeholder message for the assistant
-      setMessages((prev) => {
-        botMessageIndex = prev.length;
-        return [
-          ...prev,
-          {
-            role: "assistant",
-            model: selectedModel as ChatMessage["model"],
-            content: "",
-            citations: [],
-          },
-        ];
-      });
+      // Add a placeholder message for the assistant with unique ID
+      setMessages((prev) => [
+        ...prev,
+        {
+          _id: botMessageId,
+          role: "assistant",
+          model: selectedModel as ChatMessage["model"],
+          content: "",
+          citations: [],
+        },
+      ]);
 
       let done = false;
       while (!done) {
@@ -318,18 +307,18 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                 try {
                   const data = JSON.parse(dataLine.replace("data: ", ""));
                   if (data.topChunks) {
-                    setMessages((prev) => {
-                      const newMessages = [...prev];
-                      if (newMessages[botMessageIndex]) {
-                        newMessages[botMessageIndex].citations =
-                          data.topChunks.map((c: any, idx: number) => ({
-                            documentId: `doc-${idx}`,
-                            page: c.pageNumber || 1,
-                            snippet: c.rawText,
-                          }));
-                      }
-                      return newMessages;
-                    });
+                    const citations = data.topChunks.map(
+                      (c: any, idx: number) => ({
+                        documentId: `doc-${idx}`,
+                        page: c.pageNumber || 1,
+                        snippet: c.rawText,
+                      }),
+                    );
+                    setMessages((prev) =>
+                      prev.map((msg) =>
+                        msg._id === botMessageId ? { ...msg, citations } : msg,
+                      ),
+                    );
                   }
                 } catch {
                   // ignore JSON parse error
@@ -346,13 +335,13 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
               try {
                 const data = JSON.parse(dataStr);
                 if (data.chunk) {
-                  setMessages((prev) => {
-                    const newMessages = [...prev];
-                    if (newMessages[botMessageIndex]) {
-                      newMessages[botMessageIndex].content += data.chunk;
-                    }
-                    return newMessages;
-                  });
+                  setMessages((prev) =>
+                    prev.map((msg) =>
+                      msg._id === botMessageId
+                        ? { ...msg, content: msg.content + data.chunk }
+                        : msg,
+                    ),
+                  );
                 }
               } catch {
                 // Ignore parse errors on partial chunks
@@ -391,64 +380,38 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
 
   return (
     <div
-      className={`flex flex-col h-full select-none ${className}`}
-      style={{
-        background: "var(--color-surface-0)",
-        borderLeft: "1px solid var(--color-border-subtle)",
-      }}
+      className={`flex flex-col h-full select-none bg-surface-0 border-l border-white/[0.08] ${className}`}
     >
       {/* ── Top Bar ── */}
-      <div
-        className="flex items-center justify-between px-4 h-12 shrink-0"
-        style={{
-          borderBottom: "1px solid var(--color-border-hairline)",
-          background: "var(--color-base)",
-        }}
-      >
-        <div className="flex items-center gap-2">
-          <Sparkles size={13} style={{ color: "var(--color-brand-400)" }} />
-          <span
-            className="text-xs font-semibold"
-            style={{ color: "var(--color-text-primary)" }}
-          >
-            DocTalker AI Assistant
+      <div className="flex items-center justify-between px-4 h-14 shrink-0 border-b border-white/[0.08] bg-surface-0/90 backdrop-blur-sm">
+        <div className="flex items-center gap-2.5">
+          <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="text-xs font-semibold tracking-tight text-slate-200">
+            Assistant Studio
           </span>
         </div>
 
-        {/* Model selector */}
+        {/* Model Selector Dropdown */}
         <div className="relative">
           <button
             onClick={() => setShowModelMenu((v) => !v)}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-xs text-xs font-semibold transition-all"
-            style={{
-              background: "var(--color-surface-1)",
-              border: "1px solid var(--color-border-subtle)",
-              color: "var(--color-text-secondary)",
-            }}
+            className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-surface-1 border border-white/10 text-slate-300 hover:text-white hover:border-white/20 transition-all"
             id="btn-model-selector"
           >
-            {activeModel.label}
+            <span>{activeModel.label}</span>
             <ChevronDown
-              size={11}
-              className={`transition-transform ${showModelMenu ? "rotate-180" : ""}`}
+              size={12}
+              className={`transition-transform duration-200 text-slate-400 ${showModelMenu ? "rotate-180" : ""}`}
             />
           </button>
 
           {showModelMenu && (
             <>
               <div
-                className="fixed inset-0 z-raised"
+                className="fixed inset-0 z-30"
                 onClick={() => setShowModelMenu(false)}
               />
-              <div
-                className="absolute right-0 top-full mt-1 z-overlay rounded-md overflow-hidden animate-scale-in"
-                style={{
-                  background: "var(--color-surface-0)",
-                  border: "1px solid var(--color-border-default)",
-                  boxShadow: "var(--shadow-lg)",
-                  minWidth: "180px",
-                }}
-              >
+              <div className="absolute right-0 top-full mt-1.5 z-40 w-52 rounded-xl bg-surface-1 border border-white/15 p-1 shadow-2xl backdrop-blur-lg">
                 {MODEL_OPTIONS.map((m) => (
                   <button
                     key={m.id}
@@ -456,32 +419,14 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                       setSelectedModel(m.id);
                       setShowModelMenu(false);
                     }}
-                    className="flex items-center justify-between w-full px-3 py-2.5 text-sm transition-colors"
-                    style={{
-                      background:
-                        m.id === selectedModel
-                          ? "var(--color-surface-2)"
-                          : "transparent",
-                      color:
-                        m.id === selectedModel
-                          ? "var(--color-text-primary)"
-                          : "var(--color-text-secondary)",
-                    }}
+                    className={`flex items-center justify-between w-full px-3 py-2 rounded-lg text-xs transition-colors ${
+                      m.id === selectedModel
+                        ? "bg-brand-500/15 text-brand-200 font-semibold"
+                        : "text-slate-300 hover:bg-white/5 hover:text-white"
+                    }`}
                   >
-                    <span className="font-medium">{m.label}</span>
-                    <span
-                      className="text-2xs font-semibold px-1.5 py-0.5 rounded-full"
-                      style={{
-                        background:
-                          m.id === selectedModel
-                            ? "rgba(99,102,241,0.15)"
-                            : "var(--color-surface-2)",
-                        color:
-                          m.id === selectedModel
-                            ? "var(--color-brand-300)"
-                            : "var(--color-text-muted)",
-                      }}
-                    >
+                    <span>{m.label}</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-surface-2 text-slate-400">
                       {m.badge}
                     </span>
                   </button>
@@ -493,34 +438,32 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       </div>
 
       {/* ── Message Feed ── */}
-      <div className="flex-1 overflow-y-auto" style={{ padding: "16px" }}>
+      <div className="flex-1 overflow-y-auto p-4 sm:p-5">
         {chatId && loadingHistory ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-6 space-y-3">
-            <Loader2 className="w-6 h-6 animate-spin text-indigo-400" />
+            <Loader2 className="w-5 h-5 animate-spin text-brand-400" />
             <p className="text-xs text-slate-400">
-              Loading conversation history...
+              Loading conversation history…
             </p>
           </div>
         ) : messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center px-4 py-8 max-w-sm mx-auto">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-4 shadow-lg shadow-indigo-500/5">
-              <Sparkles size={22} />
+            <div className="w-11 h-11 rounded-2xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-400 mb-4 shadow-sm">
+              <Sparkles size={20} />
             </div>
             <h3 className="text-sm font-semibold text-slate-200">
-              {chatId
-                ? "Ask questions about this document"
-                : "No document selected"}
+              {chatId ? "Explore this document" : "No document active"}
             </h3>
             <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
               {chatId
-                ? "Our AI indexes every sentence with vector embeddings for pinpoint citations and accurate answers."
-                : "Upload a PDF, paste a website or YouTube URL, or import handwritten notes to begin chatting."}
+                ? "Ask natural questions. DocTalker cites exact pages and retrieves context using hybrid vector embeddings."
+                : "Upload a PDF, link a website or YouTube video, or import notes to begin."}
             </p>
 
             {chatId ? (
-              <div className="w-full mt-6 space-y-2">
-                <span className="text-[11px] font-medium text-slate-500 block uppercase tracking-wider">
-                  Suggested Questions
+              <div className="w-full mt-6 space-y-2 text-left">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
+                  Quick Prompts
                 </span>
                 {[
                   "Summarize the key points of this document",
@@ -530,12 +473,12 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                   <button
                     key={i}
                     onClick={() => handleSendPrompt(prompt)}
-                    className="w-full text-left px-3 py-2 rounded-lg text-xs bg-slate-800/40 hover:bg-slate-800 border border-slate-700/50 hover:border-indigo-500/40 text-slate-300 hover:text-white transition-all flex items-center justify-between group"
+                    className="w-full text-left p-3 rounded-xl text-xs bg-surface-1/60 hover:bg-surface-1 border border-white/[0.08] hover:border-brand-500/40 text-slate-300 hover:text-white transition-all flex items-center justify-between group"
                   >
                     <span>{prompt}</span>
                     <Send
                       size={12}
-                      className="opacity-0 group-hover:opacity-100 text-indigo-400 transition-opacity shrink-0 ml-2"
+                      className="opacity-0 group-hover:opacity-100 text-brand-400 transition-opacity shrink-0 ml-2"
                     />
                   </button>
                 ))}
@@ -543,7 +486,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             ) : (
               <button
                 onClick={() => onOpenUploadModal("file")}
-                className="mt-6 flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/20 transition-all"
+                className="mt-6 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold shadow-md shadow-brand-600/20 transition-all"
               >
                 <UploadCloud size={14} />
                 <span>Upload Document</span>
@@ -551,7 +494,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             )}
           </div>
         ) : (
-          <div className="space-y-5 max-w-[640px] mx-auto">
+          <div className="space-y-4 max-w-2xl mx-auto">
             {messages.map((msg, i) => (
               <div key={i} className="animate-slide-up">
                 <MessageBubble msg={msg} onCitationClick={onJumpToPage} />
@@ -560,38 +503,14 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
 
             {/* Streaming / thinking indicator */}
             {loading && (
-              <div className="flex items-center gap-2 animate-fade-in">
-                <div
-                  className="w-7 h-7 rounded-full flex items-center justify-center"
-                  style={{
-                    background: "var(--color-surface-2)",
-                    border: "1px solid var(--color-border-subtle)",
-                  }}
-                >
-                  <Bot
-                    size={12}
-                    style={{ color: "var(--color-text-secondary)" }}
-                  />
+              <div className="flex items-center gap-3 animate-fade-in pl-1">
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-brand-500/10 border border-brand-400/20 text-brand-300">
+                  <Bot size={13} />
                 </div>
-                <div
-                  className="rounded-md px-4 py-2.5"
-                  style={{
-                    background: "var(--color-surface-1)",
-                    border: "1px solid var(--color-border-subtle)",
-                  }}
-                >
-                  <div className="flex items-center gap-1.5">
-                    {[0, 0.2, 0.4].map((delay, i) => (
-                      <div
-                        key={i}
-                        className="w-1.5 h-1.5 rounded-full animate-pulse-slow"
-                        style={{
-                          background: "var(--color-brand-400)",
-                          animationDelay: `${delay}s`,
-                        }}
-                      />
-                    ))}
-                  </div>
+                <div className="rounded-2xl rounded-tl-xs px-4 py-3 bg-surface-0 border border-white/[0.08] flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-brand-400 animate-pulse" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-brand-400 animate-pulse [animation-delay:200ms]" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-brand-400 animate-pulse [animation-delay:400ms]" />
                 </div>
               </div>
             )}
@@ -602,101 +521,109 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       </div>
 
       {/* ── Input Area ── */}
-      <div
-        className="px-4 pb-4 pt-3 shrink-0"
-        style={{ borderTop: "1px solid var(--color-border-hairline)" }}
-      >
-        {/* Quick action chips */}
-        <div className="flex items-center gap-2 mb-2.5 overflow-x-auto pb-1 scrollbar-none">
-          {[
-            {
-              icon: <FileText size={11} />,
-              label: "Chat with folder",
-              tab: "folder" as const,
-            },
-            {
-              icon: <FileText size={11} />,
-              label: "Upload PDF",
-              tab: "file" as const,
-            },
-            {
-              icon: <Globe size={11} />,
-              label: "Scrape URL",
-              tab: "web" as const,
-            },
-            {
-              icon: <Video size={11} />,
-              label: "YouTube",
-              tab: "youtube" as const,
-            },
-          ].map((action) => (
-            <button
-              key={action.tab}
-              onClick={() => onOpenUploadModal(action.tab)}
-              className="flex items-center gap-1.5 shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-all"
-              style={{
-                background: "var(--color-surface-1)",
-                border: "1px solid var(--color-border-subtle)",
-                color: "var(--color-text-secondary)",
-              }}
-            >
-              <span style={{ color: "var(--color-text-muted)" }}>
-                {action.icon}
-              </span>
-              {action.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Input box */}
-        <div
-          className="flex items-end gap-2 rounded-md"
-          style={{
-            background: "var(--color-input)",
-            border: "1px solid var(--color-border-default)",
-            padding: "8px 8px 8px 12px",
-          }}
-        >
-          <button
-            className="toolbar-btn shrink-0 mb-0.5"
-            onClick={() => onOpenUploadModal("file")}
-            title="Attach file"
-          >
-            <Paperclip size={15} />
-          </button>
-
+      <div className="p-4 shrink-0 border-t border-white/[0.08] bg-surface-0/60 backdrop-blur-sm">
+        <div className="relative rounded-2xl border border-white/10 bg-surface-1/80 shadow-lg focus-within:border-brand-500/60 focus-within:ring-1 focus-within:ring-brand-500/20 transition-all">
           <textarea
             ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            rows={1}
+            rows={2}
             placeholder={
               chatId
-                ? "Ask about this document… (Enter to send)"
-                : "Upload or select a document to ask questions…"
+                ? "Ask anything about this document… (Enter to send, Shift+Enter for newline)"
+                : "Upload or select a document to start asking questions…"
             }
-            className="flex-1 bg-transparent resize-none border-none outline-none text-xs leading-relaxed"
-            style={{
-              color: "var(--color-text-primary)",
-              maxHeight: "120px",
-              minHeight: "20px",
-            }}
+            className="w-full bg-transparent resize-none border-none outline-none px-4 pt-3.5 pb-2 text-xs leading-relaxed text-slate-100 placeholder:text-slate-500"
+            style={{ maxHeight: "140px", minHeight: "52px" }}
           />
 
-          <button
-            onClick={handleSend}
-            disabled={!input.trim() || loading}
-            className="btn-primary shrink-0 p-1.5 rounded-sm disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-            id="btn-send-message"
-            title="Send message"
-          >
-            {loading ? (
-              <Loader2 size={13} className="animate-spin" />
-            ) : (
-              <Send size={13} />
-            )}
-          </button>
+          {/* Action Toolbar Inside Box */}
+          <div className="flex items-center justify-between px-3 pb-2.5 pt-1">
+            {/* Attachment popover toggle */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowAttachMenu((v) => !v)}
+                className="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs text-slate-400 hover:text-slate-200 hover:bg-white/5 transition"
+                title="Add sources to workspace"
+              >
+                <Paperclip size={13} />
+                <span className="text-[11px]">Attach Source</span>
+              </button>
+
+              {showAttachMenu && (
+                <>
+                  <div
+                    className="fixed inset-0 z-30"
+                    onClick={() => setShowAttachMenu(false)}
+                  />
+                  <div className="absolute left-0 bottom-full mb-2 z-40 w-48 rounded-xl bg-surface-1 border border-white/15 p-1.5 shadow-2xl backdrop-blur-lg">
+                    <button
+                      onClick={() => {
+                        setShowAttachMenu(false);
+                        onOpenUploadModal("file");
+                      }}
+                      className="flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg text-xs text-slate-300 hover:bg-white/5 hover:text-white transition"
+                    >
+                      <FileText size={13} className="text-brand-400" />
+                      <span>Upload PDF</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowAttachMenu(false);
+                        onOpenUploadModal("folder");
+                      }}
+                      className="flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg text-xs text-slate-300 hover:bg-white/5 hover:text-white transition"
+                    >
+                      <FileText size={13} className="text-amber-400" />
+                      <span>Folder Chat (Multi-PDF)</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowAttachMenu(false);
+                        onOpenUploadModal("web");
+                      }}
+                      className="flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg text-xs text-slate-300 hover:bg-white/5 hover:text-white transition"
+                    >
+                      <Globe size={13} className="text-emerald-400" />
+                      <span>Scrape Web URL</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowAttachMenu(false);
+                        onOpenUploadModal("youtube");
+                      }}
+                      className="flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg text-xs text-slate-300 hover:bg-white/5 hover:text-white transition"
+                    >
+                      <Video size={13} className="text-rose-400" />
+                      <span>YouTube Transcript</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Model indicator & Send Button */}
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-slate-500 font-mono hidden sm:inline">
+                {activeModel.label}
+              </span>
+              <button
+                onClick={handleSend}
+                disabled={!input.trim() || loading}
+                className="flex items-center justify-center h-7 w-7 rounded-lg bg-brand-600 hover:bg-brand-500 text-white disabled:opacity-30 disabled:cursor-not-allowed shadow-sm transition"
+                id="btn-send-message"
+                title="Send query"
+              >
+                {loading ? (
+                  <Loader2 size={13} className="animate-spin" />
+                ) : (
+                  <Send size={12} />
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

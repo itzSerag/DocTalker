@@ -73,19 +73,19 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   }, [chatId, activeIndex, activeFile, isPdf, previewKey]);
 
   return (
-    <section className="flex h-full min-w-0 flex-col bg-slate-950 text-slate-100">
-      <header className="flex min-h-14 items-center justify-between gap-3 border-b border-white/10 bg-slate-950/90 px-4">
+    <section className="flex h-full min-w-0 flex-col bg-canvas text-slate-100">
+      <header className="flex min-h-14 items-center justify-between gap-3 border-b border-white/[0.08] bg-surface-0/90 px-4">
         <div className="flex min-w-0 items-center gap-2.5">
           {files.length > 1 ? (
-            <FolderOpen size={16} className="shrink-0 text-indigo-300" />
+            <FolderOpen size={16} className="shrink-0 text-brand-400" />
           ) : (
-            <FileText size={16} className="shrink-0 text-indigo-300" />
+            <FileText size={16} className="shrink-0 text-brand-400" />
           )}
           <div className="min-w-0">
             <h2 className="truncate text-sm font-semibold">
               {documentTitle || "Your sources"}
             </h2>
-            <p className="text-[11px] text-slate-500">
+            <p className="text-[11px] text-slate-400">
               {files.length
                 ? `${files.length} ${files.length === 1 ? "source" : "sources"} in this workspace`
                 : "Your private research workspace"}
@@ -120,13 +120,13 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       {files.length > 1 && (
         <nav
           aria-label="Files in this folder chat"
-          className="flex shrink-0 gap-2 overflow-x-auto border-b border-white/10 px-4 py-2"
+          className="flex shrink-0 gap-2 overflow-x-auto border-b border-white/[0.08] px-4 py-2"
         >
           {files.map((file, index) => (
             <button
               key={`${file.FileName}-${index}`}
               onClick={() => setActiveFileKey(`${file.FileName}:${index}`)}
-              className={`max-w-56 truncate rounded-lg px-3 py-1.5 text-xs transition ${index === activeIndex ? "bg-indigo-500/15 text-indigo-200 ring-1 ring-indigo-400/30" : "text-slate-400 hover:bg-white/5 hover:text-white"}`}
+              className={`max-w-56 truncate rounded-lg px-3 py-1.5 text-xs transition ${index === activeIndex ? "bg-brand-500/20 text-brand-200 ring-1 ring-brand-400/40" : "text-slate-400 hover:bg-white/5 hover:text-white"}`}
               title={file.FileName}
             >
               {file.FileName}
@@ -142,7 +142,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           </div>
         ) : !activeFile ? (
           <div className="flex h-full min-h-80 flex-col items-center justify-center px-8 text-center">
-            <div className="mb-4 grid h-14 w-14 place-items-center rounded-2xl border border-indigo-300/15 bg-indigo-400/10 text-indigo-200">
+            <div className="mb-4 grid h-14 w-14 place-items-center rounded-2xl border border-brand-400/20 bg-brand-500/10 text-brand-300">
               <FileText size={23} />
             </div>
             <h3 className="text-base font-semibold">
@@ -155,15 +155,20 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           </div>
         ) : isPdf ? (
           previewUrl ? (
-            <iframe
-              key={previewUrl}
-              src={previewUrl}
-              title={activeFile.FileName}
-              className="h-full min-h-[70vh] w-full border-0 bg-slate-900"
-            />
+            <div className="relative h-full w-full bg-canvas flex flex-col">
+              <iframe
+                key={previewUrl}
+                src={`${previewUrl}#toolbar=1&navpanes=0&view=FitH`}
+                title={activeFile.FileName}
+                className="h-full w-full flex-1 border-0"
+              />
+            </div>
           ) : (
-            <div className="flex h-full min-h-80 items-center justify-center text-sm text-slate-400">
-              {currentPreviewError || "Opening your private PDF…"}
+            <div className="flex h-full min-h-80 flex-col items-center justify-center gap-3 text-sm text-slate-400">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
+              <span>
+                {currentPreviewError || "Rendering document preview…"}
+              </span>
             </div>
           )
         ) : activeFile.Chunks?.length ? (

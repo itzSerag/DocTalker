@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { getCompletion, getStream } from '../utils/getCompletion';
-import { getEmbeddings } from '../services/huggingface';
+import { getEmbeddings } from '../services/embeddings';
 import DocumentModel from '../models/Document';
 import { cosineSimilarity } from '../utils/cosineSimilarity';
 import Chat from '../models/Chat';
@@ -213,12 +213,7 @@ export const streamHandler = catchAsync(async (req: Request, res: Response, next
 
     let fullResponse = '';
     for await (const chunk of stream) {
-        let chunkText = '';
-        if (modelType === 'openai') {
-            chunkText = chunk.choices[0]?.delta?.content || '';
-        } else {
-            chunkText = chunk.text();
-        }
+        const chunkText = modelType === 'openai' ? chunk.choices[0]?.delta?.content || '' : chunk.text();
         if (chunkText) {
             fullResponse += chunkText;
             res.write(`data: ${JSON.stringify({ chunk: chunkText })}\n\n`);

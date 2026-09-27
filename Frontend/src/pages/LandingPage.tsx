@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
@@ -7,958 +7,376 @@ import {
   Video,
   PenTool,
   Check,
-  Zap,
-  Shield,
-  MessageSquare,
+  Sparkles,
   ChevronRight,
-  Bot,
-  Send,
   Menu,
   X,
+  Layers,
 } from "lucide-react";
 import HeroScene from "../components/3d/HeroScene";
 
-/* ─── Constants ──────────────────────────────────────────── */
+interface ModalityDemo {
+  id: "pdf" | "youtube" | "handwritten" | "web";
+  title: string;
+  icon: React.ElementType;
+  color: string;
+  badge: string;
+  sourceTitle: string;
+  sourcePreview: string;
+  sampleQuestion: string;
+  sampleAnswer: string;
+  citations: Array<{ page: string; text: string }>;
+}
 
-const NAV_LINKS = [
-  { label: "Features", href: "#features" },
-  { label: "How it works", href: "#how-it-works" },
-  { label: "Pricing", href: "#pricing" },
-];
-
-const FEATURES = [
+const DEMOS: ModalityDemo[] = [
   {
+    id: "pdf",
+    title: "PDF & Research Papers",
     icon: FileText,
-    color: "#818CF8",
-    bg: "rgba(99,102,241,0.1)",
-    title: "PDF & Documents",
-    desc: "Upload research papers, contracts, or reports. Instantly queryable with pinpoint page citations.",
+    color: "#60A5FA",
+    badge: "Vector Cosine Search",
+    sourceTitle: "Quarterly_Financial_Report_Q3.pdf",
+    sourcePreview:
+      "Section 4.2: Operating margins expanded by 14.8% YoY driven by enterprise adoption and automated procurement workflows across APAC regions...",
+    sampleQuestion: "What drove the operating margin expansion in APAC?",
+    sampleAnswer:
+      "Operating margins expanded by 14.8% year-over-year primarily due to increased enterprise customer adoption and streamlined automated procurement workflows across Asia-Pacific.",
+    citations: [
+      { page: "p. 14", text: "APAC Procurement Workflow Analysis" },
+      { page: "p. 18", text: "Consolidated Balance Sheets" },
+    ],
   },
   {
-    icon: Globe,
-    color: "#38BDF8",
-    bg: "rgba(56,189,248,0.1)",
-    title: "Web Scraping",
-    desc: "Paste any public URL. DocTalker fetches, parses, and indexes the full content in seconds.",
-  },
-  {
+    id: "youtube",
+    title: "YouTube Video Lectures",
     icon: Video,
-    color: "#F43F5E",
-    bg: "rgba(244,63,94,0.1)",
-    title: "YouTube Transcripts",
-    desc: "Drop a YouTube link. Full transcript extracted and ready for AI-powered Q&A.",
-  },
-  {
-    icon: PenTool,
     color: "#F59E0B",
-    bg: "rgba(245,158,11,0.1)",
-    title: "Handwriting OCR",
-    desc: "Scan handwritten notes with AI-powered optical character recognition and query them instantly.",
+    badge: "Timestamped Transcripts",
+    sourceTitle: "Stanford_CS229_Lecture_04.mp4",
+    sourcePreview:
+      "[04:12] Today we're deriving the gradient of logistic loss...\n[12:45] Notice how the sigmoid saturation curve affects backprop gradients...",
+    sampleQuestion:
+      "At what point does the lecturer explain sigmoid saturation?",
+    sampleAnswer:
+      "The lecturer explains sigmoid saturation at [12:45], demonstrating how extreme input values shrink gradients during backpropagation and slow down gradient descent.",
+    citations: [
+      { page: "12:45", text: "Sigmoid saturation & backprop mechanics" },
+      { page: "18:20", text: "Comparison with ReLU activations" },
+    ],
+  },
+  {
+    id: "handwritten",
+    title: "Handwritten Notes & OCR",
+    icon: PenTool,
+    color: "#34D399",
+    badge: "Multimodal Vision OCR",
+    sourceTitle: "Meeting_Whiteboard_Synthesis.png",
+    sourcePreview:
+      "Sprint Goal: Transition embeddings to OpenAI text-embedding-3-small.\n- Action Item: Serag to verify S3 bucket key permissions\n- Target deployment: Friday 18:00 UTC",
+    sampleQuestion: "Who is responsible for the S3 bucket key verification?",
+    sampleAnswer:
+      "According to the whiteboard notes, Serag is assigned to verify the S3 bucket key permissions before the target deployment scheduled for Friday at 18:00 UTC.",
+    citations: [
+      { page: "Whiteboard #1", text: "Action items & owner assignments" },
+    ],
+  },
+  {
+    id: "web",
+    title: "Live Web Articles",
+    icon: Globe,
+    color: "#A78BFA",
+    badge: "Cheerio DOM Scraper",
+    sourceTitle: "https://stripe.com/docs/payments/api",
+    sourcePreview:
+      "Payment Intents encapsulate the complete lifecycle of customer checkout, handling SCA 3D Secure challenges automatically...",
+    sampleQuestion: "How do Payment Intents handle 3D Secure authentication?",
+    sampleAnswer:
+      "Payment Intents automatically trigger dynamic Strong Customer Authentication (SCA) and 3D Secure modal flows when required by European banking regulations.",
+    citations: [{ page: "API Doc", text: "Authentication & SCA Flows" }],
   },
 ];
 
-const STEPS = [
+const PRICING_PLANS = [
   {
-    n: "01",
-    title: "Upload any content",
-    desc: "PDF, URL, YouTube video, or a photo of handwritten notes.",
-  },
-  {
-    n: "02",
-    title: "AI indexes it",
-    desc: "GPT-4o, Gemini, or Claude reads and understands your content.",
-  },
-  {
-    n: "03",
-    title: "Ask anything",
-    desc: "Get cited answers with clickable page references — no hallucination.",
-  },
-];
-
-const PLANS = [
-  {
-    name: "Free",
+    name: "Free Starter",
     price: "$0",
-    priceSave: "$0",
-    period: "forever",
-    desc: "Get started for free, no card required.",
+    desc: "Essential document chat for students and occasional readers.",
     features: [
-      "50 queries / month",
+      "50 monthly queries",
       "5 document slots",
-      "PDF & URL ingestion",
+      "PDF, DOCX & Web Ingestion",
+      "Exact page citations",
       "Community support",
     ],
-    cta: "Get Started Free",
-    ctaLink: "/signup",
-    highlighted: false,
+    highlight: false,
+    cta: "Start Free",
+    link: "/signup",
   },
   {
-    name: "Pro",
+    name: "Pro Researcher",
     price: "$12",
-    priceSave: "$10",
     period: "/ month",
     badge: "Most Popular",
-    desc: "Everything you need for serious research.",
+    desc: "Built for researchers, analysts, and students handling heavy workloads.",
     features: [
-      "1,000 queries / month",
-      "Unlimited documents",
-      "All 4 ingestion types",
-      "GPT-4o, Gemini & Claude",
-      "Citation tracking & export",
+      "1,000 monthly queries",
+      "Unlimited document slots",
+      "All 4 modalities: PDF, YouTube, Web & OCR",
+      "OpenAI & Gemini dual-model engine",
+      "Priority embedding indexing",
+      "Export chat & citations to Markdown",
     ],
-    cta: "Start Free Trial",
-    ctaLink: "/signup",
-    highlighted: true,
+    highlight: true,
+    cta: "Upgrade to Pro",
+    link: "/signup",
   },
   {
-    name: "Team",
+    name: "Team & Enterprise",
     price: "$49",
-    priceSave: "$39",
     period: "/ month",
-    desc: "Built for teams and organizations.",
+    desc: "Collaborative workspaces with dedicated infrastructure and security.",
     features: [
       "Unlimited queries",
-      "Unlimited documents",
-      "Shared workspaces",
-      "Admin dashboard",
-      "SSO + REST API access",
+      "Shared team folders & workspaces",
+      "Dedicated high-speed embedding throughput",
+      "Custom S3 bucket connection",
+      "SOC2-compliant storage",
+      "Priority 24/7 engineering support",
     ],
+    highlight: false,
     cta: "Contact Sales",
-    ctaLink: "/signup",
-    highlighted: false,
+    link: "/signup",
   },
 ];
 
-/* ─── Workspace Stage Preview ────────────────────────────── */
-
-const WorkspaceStage: React.FC = () => (
-  <div
-    className="w-full overflow-hidden"
-    style={{
-      borderRadius: "16px",
-      background: "var(--color-base)",
-      border: "1px solid var(--color-border-default)",
-      boxShadow:
-        "0 40px 120px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04)",
-    }}
-  >
-    {/* Window chrome */}
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-        padding: "12px 16px",
-        borderBottom: "1px solid var(--color-border-hairline)",
-        background: "var(--color-canvas)",
-      }}
-    >
-      <div style={{ display: "flex", gap: "6px" }}>
-        {["#F43F5E", "#F59E0B", "#10B981"].map((c) => (
-          <div
-            key={c}
-            style={{
-              width: "10px",
-              height: "10px",
-              borderRadius: "50%",
-              background: c,
-              opacity: 0.7,
-            }}
-          />
-        ))}
-      </div>
-      <div style={{ flex: 1, textAlign: "center" }}>
-        <span
-          style={{
-            fontSize: "11px",
-            fontFamily: "var(--font-mono)",
-            color: "var(--color-text-disabled)",
-          }}
-        >
-          app.doctalker.ai/workspace
-        </span>
-      </div>
-    </div>
-
-    {/* App layout */}
-    <div style={{ display: "flex", height: "420px" }}>
-      {/* Sidebar */}
-      <div
-        style={{
-          width: "200px",
-          flexShrink: 0,
-          padding: "16px 12px",
-          borderRight: "1px solid var(--color-border-hairline)",
-          display: "flex",
-          flexDirection: "column",
-          gap: "4px",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            marginBottom: "16px",
-            padding: "0 4px",
-          }}
-        >
-          <div
-            style={{
-              width: "24px",
-              height: "24px",
-              borderRadius: "6px",
-              background: "var(--color-brand-600)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "9px",
-              fontWeight: 700,
-              color: "#fff",
-            }}
-          >
-            DT
-          </div>
-          <span
-            style={{
-              fontSize: "13px",
-              fontWeight: 700,
-              color: "var(--color-text-primary)",
-            }}
-          >
-            DocTalker
-          </span>
-        </div>
-
-        <div
-          style={{
-            fontSize: "9px",
-            fontWeight: 700,
-            textTransform: "uppercase",
-            letterSpacing: "0.1em",
-            color: "var(--color-text-disabled)",
-            padding: "0 8px",
-            marginBottom: "4px",
-          }}
-        >
-          Chats
-        </div>
-
-        {[
-          { t: "Q3 Business Report", a: true },
-          { t: "AI Research Paper", a: false },
-          { t: "Sales Forecast Q4", a: false },
-        ].map((c) => (
-          <div
-            key={c.t}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "6px 8px",
-              borderRadius: "6px",
-              cursor: "pointer",
-              background: c.a ? "var(--color-surface-2)" : "transparent",
-              borderLeft: c.a
-                ? "2px solid var(--color-brand-500)"
-                : "2px solid transparent",
-              paddingLeft: c.a ? "6px" : "8px",
-            }}
-          >
-            <MessageSquare
-              size={11}
-              style={{
-                color: c.a
-                  ? "var(--color-brand-400)"
-                  : "var(--color-text-muted)",
-                flexShrink: 0,
-              }}
-            />
-            <span
-              style={{
-                fontSize: "11px",
-                color: c.a
-                  ? "var(--color-text-primary)"
-                  : "var(--color-text-muted)",
-                overflow: "hidden",
-                whiteSpace: "nowrap",
-                textOverflow: "ellipsis",
-              }}
-            >
-              {c.t}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      {/* Document pane */}
-      <div
-        style={{
-          flex: 1,
-          padding: "20px",
-          borderRight: "1px solid var(--color-border-hairline)",
-          background: "var(--color-canvas)",
-          overflow: "hidden",
-        }}
-      >
-        <div
-          style={{
-            background: "#fff",
-            borderRadius: "8px",
-            padding: "28px 32px",
-            height: "100%",
-            overflow: "hidden",
-            boxShadow: "0 2px 16px rgba(0,0,0,0.3)",
-          }}
-        >
-          <div
-            style={{
-              fontSize: "9px",
-              fontFamily: "var(--font-mono)",
-              color: "#9CA3AF",
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
-              marginBottom: "12px",
-            }}
-          >
-            Page 4 — Regional Revenue Analysis
-          </div>
-          <h4
-            style={{
-              fontSize: "16px",
-              fontWeight: 700,
-              color: "#111827",
-              letterSpacing: "-0.02em",
-              marginBottom: "12px",
-              lineHeight: "1.3",
-            }}
-          >
-            Q3 2023 Performance Summary
-          </h4>
-          <p
-            style={{
-              fontSize: "12px",
-              lineHeight: "1.8",
-              color: "#374151",
-              marginBottom: "10px",
-            }}
-          >
-            Consolidated revenue growth of 14.2% YoY across all operating
-            segments, with notable outperformance in Asia-Pacific.
-          </p>
-          <p style={{ fontSize: "12px", lineHeight: "1.8", color: "#374151" }}>
-            <mark
-              style={{
-                background: "rgba(99,102,241,0.18)",
-                borderRadius: "3px",
-                padding: "1px 3px",
-                fontWeight: 500,
-              }}
-            >
-              North America: $345M (+11.5%), EMEA: $280M (+16.8%), Asia-Pacific:
-              $195M (+22.1%)
-            </mark>
-          </p>
-        </div>
-      </div>
-
-      {/* Chat pane */}
-      <div
-        style={{
-          width: "280px",
-          flexShrink: 0,
-          display: "flex",
-          flexDirection: "column",
-          background: "var(--color-canvas)",
-        }}
-      >
-        {/* Chat header */}
-        <div
-          style={{
-            padding: "10px 14px",
-            borderBottom: "1px solid var(--color-border-hairline)",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-          }}
-        >
-          <div
-            style={{
-              width: "6px",
-              height: "6px",
-              borderRadius: "50%",
-              background: "var(--color-success)",
-            }}
-          />
-          <span
-            style={{
-              fontSize: "11px",
-              fontWeight: 600,
-              color: "var(--color-text-secondary)",
-            }}
-          >
-            AI Assistant
-          </span>
-          <span
-            style={{
-              marginLeft: "auto",
-              fontSize: "9px",
-              fontWeight: 700,
-              padding: "2px 6px",
-              borderRadius: "999px",
-              background: "var(--color-surface-1)",
-              border: "1px solid var(--color-border-subtle)",
-              color: "var(--color-text-muted)",
-            }}
-          >
-            GPT-4o
-          </span>
-        </div>
-
-        {/* Messages */}
-        <div
-          style={{
-            flex: 1,
-            padding: "14px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "12px",
-            overflow: "hidden",
-          }}
-        >
-          {/* User */}
-          <div style={{ display: "flex", justifyContent: "flex-end" }}>
-            <div
-              style={{
-                background: "rgba(99,102,241,0.15)",
-                border: "1px solid rgba(99,102,241,0.2)",
-                borderRadius: "10px 10px 2px 10px",
-                padding: "8px 12px",
-                maxWidth: "85%",
-                fontSize: "11px",
-                lineHeight: "1.6",
-                color: "var(--color-text-primary)",
-              }}
-            >
-              What regions grew fastest in Q3?
-            </div>
-          </div>
-
-          {/* AI */}
-          <div style={{ display: "flex", gap: "8px" }}>
-            <div
-              style={{
-                width: "22px",
-                height: "22px",
-                borderRadius: "50%",
-                flexShrink: 0,
-                background: "var(--color-surface-2)",
-                border: "1px solid var(--color-border-subtle)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                marginTop: "2px",
-              }}
-            >
-              <Bot size={11} style={{ color: "var(--color-text-secondary)" }} />
-            </div>
-            <div
-              style={{
-                background: "var(--color-surface-1)",
-                border: "1px solid var(--color-border-subtle)",
-                borderRadius: "2px 10px 10px 10px",
-                padding: "8px 12px",
-                maxWidth: "85%",
-                fontSize: "11px",
-                lineHeight: "1.7",
-                color: "var(--color-text-primary)",
-              }}
-            >
-              <strong>Asia-Pacific led with +22.1% YoY</strong>, followed by
-              EMEA at +16.8%.{" "}
-              <span
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "3px",
-                  padding: "1px 6px",
-                  borderRadius: "999px",
-                  fontSize: "10px",
-                  fontWeight: 600,
-                  background: "rgba(99,102,241,0.1)",
-                  border: "1px solid rgba(99,102,241,0.22)",
-                  color: "var(--color-brand-300)",
-                }}
-              >
-                <FileText size={8} /> p.4
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Input */}
-        <div
-          style={{
-            padding: "10px 12px",
-            borderTop: "1px solid var(--color-border-hairline)",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              background: "var(--color-input)",
-              border: "1px solid var(--color-border-default)",
-              borderRadius: "8px",
-              padding: "7px 10px",
-            }}
-          >
-            <span
-              style={{
-                flex: 1,
-                fontSize: "11px",
-                color: "var(--color-text-disabled)",
-              }}
-            >
-              Ask about your documents…
-            </span>
-            <div
-              style={{
-                width: "22px",
-                height: "22px",
-                borderRadius: "6px",
-                background: "var(--color-brand-600)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Send size={10} color="#fff" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-);
-
-/* ─── Landing Page ───────────────────────────────────────── */
-
 export const LandingPage: React.FC = () => {
-  const [billingAnnual, setBillingAnnual] = useState(false);
+  const [activeDemo, setActiveDemo] = useState<ModalityDemo>(DEMOS[0]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handler, { passive: true });
-    return () => window.removeEventListener("scroll", handler);
-  }, []);
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "var(--color-canvas)",
-        color: "var(--color-text-primary)",
-        overflowX: "hidden",
-      }}
-    >
-      <HeroScene />
-
-      {/* ══ NAVIGATION ══════════════════════════════════════════ */}
-      <header
-        style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 40,
-          background: scrolled ? "rgba(8,12,20,0.92)" : "rgba(8,12,20,0.6)",
-          backdropFilter: "blur(20px)",
-          borderBottom: "1px solid var(--color-border-hairline)",
-          transition: "background 200ms ease",
-        }}
-      >
-        <div
-          style={{
-            maxWidth: "1100px",
-            margin: "0 auto",
-            padding: "0 24px",
-            height: "60px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          {/* Logo */}
-          <Link
-            to="/"
-            style={{ display: "flex", alignItems: "center", gap: "10px" }}
-          >
-            <div
-              style={{
-                width: "30px",
-                height: "30px",
-                borderRadius: "8px",
-                background: "var(--color-brand-600)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontWeight: 800,
-                fontSize: "11px",
-                color: "#fff",
-                boxShadow: "var(--shadow-brand-sm)",
-              }}
-            >
-              DT
+    <div className="min-h-screen bg-canvas text-slate-100 selection:bg-brand-500/30 selection:text-white">
+      {/* ─── Top Navigation ──────────────────────────────────── */}
+      <header className="sticky top-0 z-50 border-b border-white/[0.08] bg-canvas/80 backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 sm:px-8">
+          <Link to="/" className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-brand-600 to-brand-400 text-white shadow-brand-sm">
+              <Layers size={18} />
             </div>
-            <span
-              style={{
-                fontWeight: 700,
-                fontSize: "15px",
-                letterSpacing: "-0.01em",
-                color: "var(--color-text-primary)",
-              }}
-            >
-              DocTalker
+            <span className="text-base font-bold tracking-tight text-white">
+              Doc<span className="text-brand-400">Talker</span>
             </span>
           </Link>
 
-          {/* Desktop nav */}
-          <nav
-            style={{ display: "none", alignItems: "center", gap: "32px" }}
-            className="md-nav"
-          >
-            <style>{`@media (min-width: 768px) { .md-nav { display: flex !important; } .mobile-menu-btn { display: none !important; } }`}</style>
-            {NAV_LINKS.map((n) => (
-              <a
-                key={n.label}
-                href={n.href}
-                style={{
-                  fontSize: "13px",
-                  fontWeight: 500,
-                  color: "var(--color-text-secondary)",
-                  textDecoration: "none",
-                  transition: "color 120ms",
-                }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.color = "var(--color-text-primary)")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.color = "var(--color-text-secondary)")
-                }
-              >
-                {n.label}
-              </a>
-            ))}
+          {/* Desktop Nav */}
+          <nav className="hidden items-center gap-8 md:flex">
+            <a
+              href="#capabilities"
+              className="text-sm font-medium text-slate-400 transition hover:text-slate-200"
+            >
+              Capabilities
+            </a>
+            <a
+              href="#interactive-demo"
+              className="text-sm font-medium text-slate-400 transition hover:text-slate-200"
+            >
+              Live Demo
+            </a>
+            <a
+              href="#how-it-works"
+              className="text-sm font-medium text-slate-400 transition hover:text-slate-200"
+            >
+              How It Works
+            </a>
+            <a
+              href="#pricing"
+              className="text-sm font-medium text-slate-400 transition hover:text-slate-200"
+            >
+              Pricing
+            </a>
           </nav>
 
-          {/* Actions */}
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div className="hidden items-center gap-3 md:flex">
             <Link
               to="/login"
-              style={{
-                fontSize: "13px",
-                fontWeight: 500,
-                color: "var(--color-text-secondary)",
-                padding: "7px 14px",
-                borderRadius: "8px",
-                textDecoration: "none",
-                display: "none",
-              }}
-              className="md-signin"
+              className="px-4 py-2 text-sm font-medium text-slate-300 transition hover:text-white"
             >
-              <style>{`@media (min-width: 768px) { .md-signin { display: block !important; } }`}</style>
               Sign In
             </Link>
             <Link
               to="/signup"
-              className="btn btn-primary btn-sm"
-              id="btn-nav-signup"
+              className="btn btn-primary btn-md shadow-brand-sm"
             >
-              Get Started
-              <ArrowRight size={13} />
+              <span>Get Started</span>
+              <ArrowRight size={14} />
             </Link>
-            {/* Mobile menu button */}
-            <button
-              onClick={() => setMobileMenuOpen((v) => !v)}
-              className="mobile-menu-btn toolbar-btn"
-              style={{ width: "36px", height: "36px" }}
-            >
-              {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
-            </button>
           </div>
+
+          {/* Mobile hamburger */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-2 text-slate-400 md:hidden hover:text-white"
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
         </div>
 
-        {/* Mobile menu */}
+        {/* Mobile dropdown */}
         {mobileMenuOpen && (
-          <div
-            style={{
-              background: "var(--color-base)",
-              borderTop: "1px solid var(--color-border-hairline)",
-              padding: "16px 24px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "4px",
-            }}
-          >
-            {NAV_LINKS.map((n) => (
+          <div className="border-b border-white/[0.08] bg-base px-6 py-4 md:hidden">
+            <div className="flex flex-col gap-3">
               <a
-                key={n.label}
-                href={n.href}
+                href="#capabilities"
                 onClick={() => setMobileMenuOpen(false)}
-                style={{
-                  fontSize: "15px",
-                  fontWeight: 500,
-                  color: "var(--color-text-secondary)",
-                  padding: "10px 0",
-                  borderBottom: "1px solid var(--color-border-hairline)",
-                  textDecoration: "none",
-                }}
+                className="py-1 text-sm text-slate-300"
               >
-                {n.label}
+                Capabilities
               </a>
-            ))}
-            <Link
-              to="/login"
-              onClick={() => setMobileMenuOpen(false)}
-              style={{
-                fontSize: "15px",
-                fontWeight: 500,
-                color: "var(--color-text-secondary)",
-                padding: "10px 0",
-                textDecoration: "none",
-              }}
-            >
-              Sign In
-            </Link>
+              <a
+                href="#interactive-demo"
+                onClick={() => setMobileMenuOpen(false)}
+                className="py-1 text-sm text-slate-300"
+              >
+                Live Demo
+              </a>
+              <a
+                href="#pricing"
+                onClick={() => setMobileMenuOpen(false)}
+                className="py-1 text-sm text-slate-300"
+              >
+                Pricing
+              </a>
+              <div className="mt-2 flex flex-col gap-2 pt-2 border-t border-white/[0.08]">
+                <Link
+                  to="/login"
+                  className="w-full py-2 text-center text-sm font-medium text-slate-300"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/signup"
+                  className="btn btn-primary btn-md w-full justify-center"
+                >
+                  Get Started Free
+                </Link>
+              </div>
+            </div>
           </div>
         )}
       </header>
 
-      {/* ══ HERO ════════════════════════════════════════════════ */}
-      <section
-        style={{
-          position: "relative",
-          paddingTop: "96px",
-          paddingBottom: "72px",
-          textAlign: "center",
-          padding: "96px 24px 72px",
-        }}
-      >
-        <div style={{ maxWidth: "760px", margin: "0 auto" }}>
-          {/* Label */}
-          <div style={{ marginBottom: "24px" }}>
-            <span className="badge badge-brand">
-              <Zap size={9} />
-              GPT-4o · Gemini 2.5 · Claude 3.5 Sonnet
-            </span>
+      {/* ─── Hero Section with 3D Canvas ─────────────────────── */}
+      <section className="relative overflow-hidden pt-20 pb-28 md:pt-28 md:pb-36">
+        <HeroScene />
+
+        {/* Ambient atmospheric glows */}
+        <div className="pointer-events-none absolute -top-24 left-1/2 -z-10 h-[500px] w-[800px] -translate-x-1/2 rounded-full bg-brand-600/15 blur-[120px]" />
+        <div className="pointer-events-none absolute top-48 right-10 -z-10 h-72 w-72 rounded-full bg-amber-500/10 blur-[100px]" />
+
+        <div className="relative mx-auto max-w-4xl px-6 text-center">
+          {/* Badge */}
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-brand-400/25 bg-brand-500/10 px-3.5 py-1 text-xs font-semibold text-brand-300 backdrop-blur-sm">
+            <Sparkles size={12} className="text-amber-400" />
+            <span>Next-Gen Multimodal Document Intelligence</span>
           </div>
 
           {/* Headline */}
-          <h1
-            style={{
-              fontSize: "clamp(2.6rem, 7vw, 5rem)",
-              fontWeight: 800,
-              lineHeight: 1.05,
-              letterSpacing: "-0.04em",
-              color: "var(--color-text-primary)",
-              margin: "0 0 20px",
-            }}
-          >
-            Your Documents.{" "}
-            <span style={{ color: "var(--color-brand-400)" }}>
+          <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl md:text-7xl">
+            Your Documents. <br />
+            <span className="bg-gradient-to-r from-brand-300 via-brand-400 to-amber-300 bg-clip-text text-transparent">
               Now They Talk Back.
             </span>
           </h1>
 
-          {/* Subheadline */}
-          <p
-            style={{
-              fontSize: "18px",
-              lineHeight: "1.7",
-              color: "var(--color-text-secondary)",
-              maxWidth: "560px",
-              margin: "0 auto 36px",
-            }}
-          >
-            Upload PDFs, paste URLs, drop YouTube links, or scan handwritten
-            notes. Chat with your content — with direct page citations.
+          {/* Subtitle */}
+          <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-slate-300 sm:text-lg sm:leading-8">
+            Upload dense PDFs, paste YouTube lecture URLs, import web articles,
+            or snap handwritten meeting notes. Chat with pinpoint footnotes that
+            jump straight to source lines.
           </p>
 
-          {/* CTA row */}
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "12px",
-              marginBottom: "20px",
-            }}
-          >
+          {/* CTA Group */}
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
             <Link
               to="/signup"
-              className="btn btn-primary btn-lg"
-              id="btn-hero-primary"
+              className="btn btn-primary btn-lg shadow-brand-md px-7 py-3 text-sm font-semibold"
             >
-              Start for Free
+              <span>Launch Workspace Free</span>
               <ArrowRight size={16} />
             </Link>
-            <a href="#how-it-works" className="btn btn-secondary btn-lg">
-              How it works
+            <a
+              href="#interactive-demo"
+              className="btn btn-secondary btn-lg border-white/10 bg-surface-1/60 px-6 py-3 text-sm font-medium backdrop-blur-sm hover:bg-surface-2"
+            >
+              <span>Explore Interactive Demo</span>
             </a>
           </div>
 
-          <p style={{ fontSize: "12px", color: "var(--color-text-disabled)" }}>
-            No credit card required — 50 free queries included
+          <p className="mt-4 text-xs text-slate-500">
+            No credit card required · 50 complimentary vector queries included
           </p>
         </div>
       </section>
 
-      {/* ══ WORKSPACE STAGE ═════════════════════════════════════ */}
-      <section style={{ padding: "0 24px 80px" }}>
-        <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-          <WorkspaceStage />
-        </div>
-      </section>
-
-      {/* ══ TRUST BAR ═══════════════════════════════════════════ */}
+      {/* ─── Capabilities Overview (The 4 Modalities) ─────────── */}
       <section
-        style={{
-          borderTop: "1px solid var(--color-border-hairline)",
-          borderBottom: "1px solid var(--color-border-hairline)",
-          padding: "28px 24px",
-        }}
+        id="capabilities"
+        className="py-20 border-t border-white/[0.06] bg-base/50"
       >
-        <div style={{ maxWidth: "900px", margin: "0 auto" }}>
-          <p
-            style={{
-              textAlign: "center",
-              fontSize: "11px",
-              fontWeight: 600,
-              textTransform: "uppercase",
-              letterSpacing: "0.1em",
-              color: "var(--color-text-disabled)",
-              marginBottom: "20px",
-            }}
-          >
-            Powered by the world's best AI
-          </p>
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "40px",
-            }}
-          >
-            {["OpenAI", "Google", "Anthropic", "Stripe", "Brevo"].map((b) => (
-              <span
-                key={b}
-                style={{
-                  fontSize: "14px",
-                  fontWeight: 700,
-                  letterSpacing: "-0.01em",
-                  color: "var(--color-text-primary)",
-                  opacity: 0.25,
-                }}
-              >
-                {b}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ══ FEATURES ════════════════════════════════════════════ */}
-      <section id="features" style={{ padding: "96px 24px" }}>
-        <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-          {/* Header */}
-          <div style={{ textAlign: "center", marginBottom: "56px" }}>
-            <span
-              className="badge badge-brand"
-              style={{ marginBottom: "16px" }}
-            >
-              Capabilities
+        <div className="mx-auto max-w-7xl px-6 sm:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-14">
+            <span className="text-xs font-bold uppercase tracking-wider text-brand-400">
+              Unrivaled Versatility
             </span>
-            <h2
-              style={{
-                fontSize: "clamp(1.75rem, 4vw, 2.5rem)",
-                fontWeight: 800,
-                letterSpacing: "-0.03em",
-                color: "var(--color-text-primary)",
-                margin: "0 0 16px",
-              }}
-            >
-              Intelligence across every format
+            <h2 className="mt-2 text-2xl font-bold tracking-tight text-white sm:text-4xl">
+              Four Superpowers in a Single Workspace
             </h2>
-            <p
-              style={{
-                fontSize: "16px",
-                lineHeight: "1.7",
-                color: "var(--color-text-secondary)",
-                maxWidth: "520px",
-                margin: "0 auto",
-              }}
-            >
-              DocTalker goes beyond PDFs — ingest virtually any content type and
-              interact with it through natural language.
+            <p className="mt-3 text-sm text-slate-400">
+              DocTalker breaks the limits of standard PDF readers by accepting
+              virtually any knowledge source.
             </p>
           </div>
 
-          {/* Feature cards */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-              gap: "20px",
-            }}
-          >
-            {FEATURES.map((f) => {
-              const Icon = f.icon;
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {DEMOS.map((demo) => {
+              const Icon = demo.icon;
               return (
                 <div
-                  key={f.title}
-                  className="card-interactive"
-                  style={{ padding: "28px" }}
+                  key={demo.id}
+                  onClick={() => {
+                    setActiveDemo(demo);
+                    document
+                      .getElementById("interactive-demo")
+                      ?.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="group relative cursor-pointer rounded-2xl border border-white/[0.08] bg-surface-0/60 p-6 transition-all duration-200 hover:-translate-y-1 hover:border-brand-400/40 hover:bg-surface-1/80 hover:shadow-lg"
                 >
                   <div
-                    style={{
-                      width: "44px",
-                      height: "44px",
-                      borderRadius: "10px",
-                      background: f.bg,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      marginBottom: "20px",
-                    }}
+                    className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl transition group-hover:scale-105"
+                    style={{ background: `${demo.color}18`, color: demo.color }}
                   >
-                    <Icon size={20} color={f.color} />
+                    <Icon size={24} />
                   </div>
-                  <h3
-                    style={{
-                      fontSize: "15px",
-                      fontWeight: 700,
-                      color: "var(--color-text-primary)",
-                      marginBottom: "8px",
-                      letterSpacing: "-0.01em",
-                    }}
-                  >
-                    {f.title}
+                  <span className="inline-block mb-2 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                    {demo.badge}
+                  </span>
+                  <h3 className="text-base font-semibold text-white group-hover:text-brand-300">
+                    {demo.title}
                   </h3>
-                  <p
-                    style={{
-                      fontSize: "13px",
-                      lineHeight: "1.7",
-                      color: "var(--color-text-muted)",
-                      margin: 0,
-                    }}
-                  >
-                    {f.desc}
+                  <p className="mt-2 text-xs leading-relaxed text-slate-400">
+                    {demo.id === "pdf" &&
+                      "Index multi-hundred page documents with vector embeddings and instant page footnotes."}
+                    {demo.id === "youtube" &&
+                      "Automated transcript extraction with jump-to-second video timestamps."}
+                    {demo.id === "handwritten" &&
+                      "Vision AI reads whiteboards, handwritten meeting notes, and formulas."}
+                    {demo.id === "web" &&
+                      "Paste URLs to scrape clean article text, bypassing ads and cookie banners."}
                   </p>
+                  <div className="mt-4 flex items-center gap-1 text-xs font-semibold text-brand-400 opacity-0 transition group-hover:opacity-100">
+                    <span>Try demo</span>
+                    <ChevronRight size={14} />
+                  </div>
                 </div>
               );
             })}
@@ -966,720 +384,310 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* ══ HOW IT WORKS ════════════════════════════════════════ */}
-      <section id="how-it-works" style={{ padding: "0 24px 96px" }}>
-        <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-          <div
-            style={{
-              borderRadius: "16px",
-              border: "1px solid var(--color-border-subtle)",
-              background: "var(--color-surface-0)",
-              padding: "56px",
-            }}
-          >
-            <div style={{ textAlign: "center", marginBottom: "52px" }}>
-              <span
-                className="badge badge-brand"
-                style={{ marginBottom: "16px" }}
-              >
-                How it works
+      {/* ─── Interactive Live Demo Stage ─────────────────────── */}
+      <section
+        id="interactive-demo"
+        className="py-24 border-t border-white/[0.06]"
+      >
+        <div className="mx-auto max-w-6xl px-6 sm:px-8">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-amber-400">
+                Interactive Showcase
               </span>
-              <h2
-                style={{
-                  fontSize: "clamp(1.75rem, 4vw, 2.25rem)",
-                  fontWeight: 800,
-                  letterSpacing: "-0.03em",
-                  color: "var(--color-text-primary)",
-                  margin: 0,
-                }}
-              >
-                Three steps to insight
+              <h2 className="mt-1 text-2xl font-bold tracking-tight text-white sm:text-3xl">
+                See How DocTalker Understands Knowledge
               </h2>
             </div>
 
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-                gap: "40px",
-              }}
-            >
-              {STEPS.map((s, i) => (
-                <div
-                  key={s.n}
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "16px",
-                  }}
+            {/* Modality switcher tabs */}
+            <div className="flex flex-wrap gap-2 p-1.5 rounded-xl border border-white/10 bg-surface-0/80">
+              {DEMOS.map((demo) => (
+                <button
+                  key={demo.id}
+                  onClick={() => setActiveDemo(demo)}
+                  className={`flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-xs font-semibold transition ${
+                    activeDemo.id === demo.id
+                      ? "bg-brand-600 text-white shadow-brand-sm"
+                      : "text-slate-400 hover:text-white hover:bg-white/5"
+                  }`}
                 >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "16px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: "40px",
-                        height: "40px",
-                        borderRadius: "10px",
-                        background: "var(--color-brand-950)",
-                        border: "1px solid rgba(99,102,241,0.3)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontFamily: "var(--font-mono)",
-                        fontSize: "13px",
-                        fontWeight: 700,
-                        color: "var(--color-brand-400)",
-                        flexShrink: 0,
-                      }}
-                    >
-                      {s.n}
-                    </div>
-                    {i < STEPS.length - 1 && (
-                      <div
-                        style={{
-                          flex: 1,
-                          height: "1px",
-                          background: "var(--color-border-subtle)",
-                        }}
-                        className="step-line"
-                      />
-                    )}
-                  </div>
-                  <div>
-                    <h3
-                      style={{
-                        fontSize: "15px",
-                        fontWeight: 700,
-                        color: "var(--color-text-primary)",
-                        marginBottom: "6px",
-                      }}
-                    >
-                      {s.title}
-                    </h3>
-                    <p
-                      style={{
-                        fontSize: "13px",
-                        lineHeight: "1.7",
-                        color: "var(--color-text-secondary)",
-                        margin: 0,
-                      }}
-                    >
-                      {s.desc}
-                    </p>
-                  </div>
-                </div>
+                  <demo.icon size={14} />
+                  <span>{demo.title.split(" ")[0]}</span>
+                </button>
               ))}
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* ══ CITATIONS FEATURE ROW ═══════════════════════════════ */}
-      <section style={{ padding: "0 24px 96px" }}>
-        <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-              gap: "48px",
-              alignItems: "center",
-            }}
-          >
-            {/* Text */}
-            <div>
-              <span
-                className="badge badge-brand"
-                style={{ marginBottom: "16px" }}
-              >
-                Source Citations
-              </span>
-              <h2
-                style={{
-                  fontSize: "clamp(1.6rem, 3.5vw, 2.25rem)",
-                  fontWeight: 800,
-                  letterSpacing: "-0.03em",
-                  color: "var(--color-text-primary)",
-                  marginBottom: "16px",
-                }}
-              >
-                Every answer, traceable to the source
-              </h2>
-              <p
-                style={{
-                  fontSize: "15px",
-                  lineHeight: "1.8",
-                  color: "var(--color-text-secondary)",
-                  marginBottom: "24px",
-                }}
-              >
-                DocTalker doesn't hallucinate. Every AI response includes
-                clickable page citations that jump you directly to the relevant
-                section in your document.
-              </p>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "10px",
-                }}
-              >
-                {[
-                  "Clickable page references in every answer",
-                  "Highlighted text in document viewer",
-                  "No hallucination — always grounded",
-                ].map((f) => (
-                  <div
-                    key={f}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "10px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: "18px",
-                        height: "18px",
-                        borderRadius: "50%",
-                        background: "rgba(16,185,129,0.15)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
-                      }}
-                    >
-                      <Check size={10} color="var(--color-success)" />
-                    </div>
-                    <span
-                      style={{
-                        fontSize: "13px",
-                        color: "var(--color-text-secondary)",
-                      }}
-                    >
-                      {f}
-                    </span>
-                  </div>
-                ))}
+          {/* Interactive Stage Canvas */}
+          <div className="overflow-hidden rounded-2xl border border-white/10 bg-base shadow-2xl">
+            {/* Window chrome header */}
+            <div className="flex items-center justify-between border-b border-white/[0.08] bg-canvas px-4 py-3">
+              <div className="flex items-center gap-2">
+                <span className="h-3 w-3 rounded-full bg-red-500/80" />
+                <span className="h-3 w-3 rounded-full bg-amber-500/80" />
+                <span className="h-3 w-3 rounded-full bg-emerald-500/80" />
+                <span className="ml-3 text-xs font-mono text-slate-500">
+                  doctalker.ai/workspace/live-session
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-2xs font-semibold uppercase tracking-wider text-slate-400 bg-surface-1 px-2 py-0.5 rounded border border-white/5">
+                  Dual-Engine: OpenAI + Gemini
+                </span>
               </div>
             </div>
 
-            {/* UI mockup */}
-            <div className="card" style={{ padding: "24px" }}>
-              <p
-                style={{
-                  fontSize: "11px",
-                  fontWeight: 600,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                  color: "var(--color-text-disabled)",
-                  marginBottom: "16px",
-                }}
-              >
-                Source References
-              </p>
-              {[
-                {
-                  page: 4,
-                  snippet: "Regional Revenue Analysis — Key Markets...",
-                  active: true,
-                },
-                {
-                  page: 7,
-                  snippet: "Growth Velocity by Segment...",
-                  active: false,
-                },
-                {
-                  page: 12,
-                  snippet: "Forecast & Forward Guidance...",
-                  active: false,
-                },
-              ].map((c) => (
-                <div
-                  key={c.page}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "12px",
-                    padding: "12px",
-                    borderRadius: "8px",
-                    marginBottom: "8px",
-                    cursor: "pointer",
-                    background: c.active
-                      ? "rgba(99,102,241,0.08)"
-                      : "var(--color-surface-1)",
-                    border: `1px solid ${c.active ? "rgba(99,102,241,0.25)" : "transparent"}`,
-                  }}
-                >
-                  <div
-                    style={{
-                      width: "28px",
-                      height: "28px",
-                      borderRadius: "6px",
-                      flexShrink: 0,
-                      background: c.active
-                        ? "rgba(99,102,241,0.15)"
-                        : "var(--color-surface-2)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <FileText
-                      size={13}
-                      color={
-                        c.active
-                          ? "var(--color-brand-400)"
-                          : "var(--color-text-muted)"
-                      }
-                    />
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
+            {/* Split Pane Demo Layout */}
+            <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-white/[0.08]">
+              {/* Left Pane: Document Source Preview */}
+              <div className="p-6 sm:p-8 bg-surface-0/40">
+                <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/[0.06]">
+                  <div className="flex items-center gap-2.5">
                     <div
+                      className="p-2 rounded-lg"
                       style={{
-                        fontSize: "11px",
-                        fontWeight: 600,
-                        color: c.active
-                          ? "var(--color-brand-300)"
-                          : "var(--color-text-secondary)",
-                        marginBottom: "2px",
+                        background: `${activeDemo.color}20`,
+                        color: activeDemo.color,
                       }}
                     >
-                      Page {c.page}
+                      <activeDemo.icon size={16} />
                     </div>
-                    <div
-                      style={{
-                        fontSize: "11px",
-                        color: "var(--color-text-muted)",
-                        overflow: "hidden",
-                        whiteSpace: "nowrap",
-                        textOverflow: "ellipsis",
-                      }}
-                    >
-                      {c.snippet}
+                    <div>
+                      <h4 className="text-xs font-bold text-white truncate max-w-[200px]">
+                        {activeDemo.sourceTitle}
+                      </h4>
+                      <span className="text-[10px] text-slate-400">
+                        {activeDemo.badge}
+                      </span>
                     </div>
                   </div>
-                  {c.active && (
-                    <ChevronRight size={14} color="var(--color-brand-400)" />
-                  )}
+                  <span className="text-2xs font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                    ● Processed
+                  </span>
                 </div>
-              ))}
+
+                <div className="rounded-xl border border-white/5 bg-canvas/70 p-5 font-mono text-xs leading-relaxed text-slate-300 whitespace-pre-wrap min-h-[220px]">
+                  {activeDemo.sourcePreview}
+                </div>
+              </div>
+
+              {/* Right Pane: Conversation & Grounded Footnotes */}
+              <div className="p-6 sm:p-8 flex flex-col justify-between bg-surface-0/70">
+                <div className="space-y-4">
+                  {/* User message */}
+                  <div className="flex justify-end">
+                    <div className="max-w-[85%] rounded-2xl rounded-tr-xs bg-brand-600 px-4 py-2.5 text-xs text-white shadow-sm">
+                      {activeDemo.sampleQuestion}
+                    </div>
+                  </div>
+
+                  {/* Assistant response */}
+                  <div className="flex justify-start">
+                    <div className="max-w-[95%] rounded-2xl rounded-tl-xs border border-white/[0.08] bg-surface-1 p-4 text-xs leading-relaxed text-slate-200">
+                      <p>{activeDemo.sampleAnswer}</p>
+
+                      {/* Footnote citations */}
+                      <div className="mt-4 pt-3 border-t border-white/[0.08]">
+                        <span className="text-2xs font-bold uppercase tracking-wider text-slate-400 block mb-2">
+                          Verified Sources & Footnotes
+                        </span>
+                        <div className="flex flex-wrap gap-2">
+                          {activeDemo.citations.map((c, i) => (
+                            <span
+                              key={i}
+                              className="citation-chip cursor-pointer"
+                              title={c.text}
+                            >
+                              <FileText size={10} />
+                              <span>{c.page}</span>
+                              <span className="text-slate-400 font-normal">
+                                · {c.text}
+                              </span>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Simulated prompt box */}
+                <div className="mt-6 flex items-center justify-between rounded-xl border border-white/10 bg-canvas px-3.5 py-2.5 text-xs text-slate-500">
+                  <span>Ask anything about this {activeDemo.id}...</span>
+                  <div className="flex items-center gap-1.5 text-2xs font-mono text-brand-400">
+                    <span>Return ↵</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ══ PRICING ═════════════════════════════════════════════ */}
-      <section id="pricing" style={{ padding: "0 24px 96px" }}>
-        <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-          {/* Header */}
-          <div style={{ textAlign: "center", marginBottom: "48px" }}>
-            <span
-              className="badge badge-brand"
-              style={{ marginBottom: "16px" }}
-            >
-              Pricing
+      {/* ─── How It Works Workflow ───────────────────────────── */}
+      <section
+        id="how-it-works"
+        className="py-24 border-t border-white/[0.06] bg-base/40"
+      >
+        <div className="mx-auto max-w-7xl px-6 sm:px-8">
+          <div className="text-center max-w-xl mx-auto mb-16">
+            <span className="text-xs font-bold uppercase tracking-wider text-brand-400">
+              Architectural Rigor
             </span>
-            <h2
-              style={{
-                fontSize: "clamp(1.75rem, 4vw, 2.5rem)",
-                fontWeight: 800,
-                letterSpacing: "-0.03em",
-                color: "var(--color-text-primary)",
-                marginBottom: "12px",
-              }}
-            >
-              Simple, transparent pricing
+            <h2 className="mt-2 text-2xl font-bold tracking-tight text-white sm:text-4xl">
+              Zero Hallucinations. Pure Grounding.
             </h2>
-            <p
-              style={{
-                fontSize: "16px",
-                color: "var(--color-text-secondary)",
-                marginBottom: "28px",
-              }}
-            >
-              Start free. Upgrade when you need more.
-            </p>
-
-            {/* Billing toggle */}
-            <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "4px",
-                background: "var(--color-surface-1)",
-                border: "1px solid var(--color-border-subtle)",
-                borderRadius: "999px",
-                padding: "4px",
-              }}
-            >
-              {["Monthly", "Annual"].map((b) => {
-                const isActive = (b === "Annual") === billingAnnual;
-                return (
-                  <button
-                    key={b}
-                    onClick={() => setBillingAnnual(b === "Annual")}
-                    style={{
-                      padding: "6px 16px",
-                      borderRadius: "999px",
-                      fontSize: "13px",
-                      fontWeight: 600,
-                      border: isActive
-                        ? "1px solid var(--color-border-default)"
-                        : "1px solid transparent",
-                      background: isActive
-                        ? "var(--color-surface-2)"
-                        : "transparent",
-                      color: isActive
-                        ? "var(--color-text-primary)"
-                        : "var(--color-text-muted)",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
-                    }}
-                  >
-                    {b}
-                    {b === "Annual" && (
-                      <span
-                        style={{
-                          fontSize: "9px",
-                          fontWeight: 700,
-                          padding: "1px 6px",
-                          borderRadius: "999px",
-                          background: "rgba(16,185,129,0.15)",
-                          color: "var(--color-success)",
-                        }}
-                      >
-                        –20%
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
           </div>
 
-          {/* Cards */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-              gap: "20px",
-              maxWidth: "960px",
-              margin: "0 auto",
-            }}
-          >
-            {PLANS.map((plan) => (
+          <div className="grid gap-8 md:grid-cols-3">
+            {[
+              {
+                step: "01",
+                title: "Unified Ingestion",
+                desc: "Documents, YouTube videos, and photos are cleaned, tokenized, and split into overlapping semantic chunks.",
+              },
+              {
+                step: "02",
+                title: "Vector Embedding Matrix",
+                desc: "High-dimensional embeddings index every sentence into cosine similarity vectors for ultra-fast retrieval.",
+              },
+              {
+                step: "03",
+                title: "Grounded Synthesis",
+                desc: "State-of-the-art LLMs synthesize answers strictly constrained to top matching chunks, citing exact page numbers.",
+              },
+            ].map((st) => (
+              <div
+                key={st.step}
+                className="relative rounded-2xl border border-white/[0.08] bg-surface-0/50 p-8 transition hover:border-white/20 hover:bg-surface-0"
+              >
+                <span className="font-mono text-4xl font-extrabold text-brand-500/30">
+                  {st.step}
+                </span>
+                <h3 className="mt-4 text-base font-bold text-white">
+                  {st.title}
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-400">
+                  {st.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Pricing Section ─────────────────────────────────── */}
+      <section id="pricing" className="py-24 border-t border-white/[0.06]">
+        <div className="mx-auto max-w-7xl px-6 sm:px-8">
+          <div className="text-center max-w-xl mx-auto mb-16">
+            <span className="text-xs font-bold uppercase tracking-wider text-amber-400">
+              Transparent Investment
+            </span>
+            <h2 className="mt-2 text-2xl font-bold tracking-tight text-white sm:text-4xl">
+              Simple, Predictable Plans
+            </h2>
+            <p className="mt-3 text-sm text-slate-400">
+              Start free today and upgrade as your document library grows.
+            </p>
+          </div>
+
+          <div className="grid gap-8 md:grid-cols-3">
+            {PRICING_PLANS.map((plan) => (
               <div
                 key={plan.name}
-                style={{
-                  position: "relative",
-                  padding: "32px",
-                  borderRadius: "16px",
-                  background: plan.highlighted
-                    ? "var(--color-brand-950)"
-                    : "var(--color-surface-0)",
-                  border: `1px solid ${plan.highlighted ? "rgba(99,102,241,0.5)" : "var(--color-border-subtle)"}`,
-                  boxShadow: plan.highlighted
-                    ? "var(--shadow-brand-md)"
-                    : "var(--shadow-sm)",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "24px",
-                }}
+                className={`relative flex flex-col justify-between rounded-3xl border p-8 transition-all ${
+                  plan.highlight
+                    ? "border-brand-500/50 bg-gradient-to-b from-brand-950/40 via-surface-0 to-surface-0 shadow-brand-md"
+                    : "border-white/[0.08] bg-surface-0/50 hover:border-white/20"
+                }`}
               >
                 {plan.badge && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "-13px",
-                      left: "50%",
-                      transform: "translateX(-50%)",
-                    }}
-                  >
-                    <span className="badge badge-brand">{plan.badge}</span>
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+                    <span className="rounded-full bg-brand-500 px-3.5 py-1 text-2xs font-bold uppercase tracking-wider text-white shadow-sm">
+                      {plan.badge}
+                    </span>
                   </div>
                 )}
 
-                {/* Plan header */}
                 <div>
-                  <p
-                    style={{
-                      fontSize: "11px",
-                      fontWeight: 700,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.1em",
-                      color: plan.highlighted
-                        ? "var(--color-brand-300)"
-                        : "var(--color-text-muted)",
-                      marginBottom: "12px",
-                    }}
-                  >
-                    {plan.name}
-                  </p>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "baseline",
-                      gap: "4px",
-                      marginBottom: "6px",
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: "40px",
-                        fontWeight: 800,
-                        color: "var(--color-text-primary)",
-                        letterSpacing: "-0.04em",
-                        lineHeight: 1,
-                      }}
-                    >
-                      {billingAnnual && plan.price !== "$0"
-                        ? plan.priceSave
-                        : plan.price}
+                  <h3 className="text-lg font-bold text-white">{plan.name}</h3>
+                  <div className="mt-4 flex items-baseline gap-1">
+                    <span className="text-4xl font-extrabold tracking-tight text-white">
+                      {plan.price}
                     </span>
-                    <span
-                      style={{
-                        fontSize: "13px",
-                        color: "var(--color-text-muted)",
-                      }}
-                    >
-                      {plan.period}
-                    </span>
+                    {plan.period && (
+                      <span className="text-xs text-slate-400">
+                        {plan.period}
+                      </span>
+                    )}
                   </div>
-                  <p
-                    style={{
-                      fontSize: "13px",
-                      color: "var(--color-text-muted)",
-                      margin: 0,
-                    }}
-                  >
+                  <p className="mt-3 text-xs text-slate-400 leading-relaxed">
                     {plan.desc}
                   </p>
-                </div>
 
-                {/* Features */}
-                <ul
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "10px",
-                    margin: 0,
-                    padding: 0,
-                    flex: 1,
-                    listStyle: "none",
-                  }}
-                >
-                  {plan.features.map((f) => (
-                    <li
-                      key={f}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "10px",
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: "16px",
-                          height: "16px",
-                          borderRadius: "50%",
-                          flexShrink: 0,
-                          background: plan.highlighted
-                            ? "rgba(99,102,241,0.15)"
-                            : "rgba(16,185,129,0.12)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
+                  <ul className="mt-8 space-y-3.5 border-t border-white/[0.08] pt-6">
+                    {plan.features.map((feat, idx) => (
+                      <li
+                        key={idx}
+                        className="flex items-center gap-2.5 text-xs text-slate-300"
                       >
                         <Check
-                          size={9}
-                          color={
-                            plan.highlighted
-                              ? "var(--color-brand-400)"
-                              : "var(--color-success)"
-                          }
+                          size={14}
+                          className="shrink-0 text-emerald-400"
                         />
-                      </div>
-                      <span
-                        style={{
-                          fontSize: "13px",
-                          color: "var(--color-text-secondary)",
-                        }}
-                      >
-                        {f}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+                        <span>{feat}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
 
-                <Link
-                  to={plan.ctaLink}
-                  className={`btn ${plan.highlighted ? "btn-primary" : "btn-secondary"} btn-md`}
-                  style={{ justifyContent: "center", width: "100%" }}
-                >
-                  {plan.cta}
-                </Link>
+                <div className="mt-8 pt-4">
+                  <Link
+                    to={plan.link}
+                    className={`btn w-full justify-center text-xs font-semibold py-2.5 ${
+                      plan.highlight
+                        ? "btn-primary shadow-brand-sm"
+                        : "btn-secondary border-white/10 hover:bg-surface-2"
+                    }`}
+                  >
+                    {plan.cta}
+                  </Link>
+                </div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ══ TRUST / SECURITY ════════════════════════════════════ */}
-      <section
-        style={{
-          padding: "0 24px 96px",
-          borderTop: "1px solid var(--color-border-hairline)",
-        }}
-      >
-        <div
-          style={{
-            maxWidth: "600px",
-            margin: "0 auto",
-            textAlign: "center",
-            paddingTop: "80px",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "8px",
-              marginBottom: "12px",
-            }}
-          >
-            <Shield size={16} color="var(--color-success)" />
-            <span
-              style={{
-                fontSize: "13px",
-                fontWeight: 600,
-                color: "var(--color-text-secondary)",
-              }}
-            >
-              Enterprise-grade security
-            </span>
-          </div>
-          <h2
-            style={{
-              fontSize: "clamp(1.6rem, 3.5vw, 2.25rem)",
-              fontWeight: 800,
-              letterSpacing: "-0.03em",
-              color: "var(--color-text-primary)",
-              marginBottom: "16px",
-            }}
-          >
-            Your data stays yours
-          </h2>
-          <p
-            style={{
-              fontSize: "15px",
-              lineHeight: "1.8",
-              color: "var(--color-text-secondary)",
-              marginBottom: "36px",
-            }}
-          >
-            All documents are encrypted at rest and in transit. We never use
-            your data to train AI models. Fully GDPR compliant.
-          </p>
-          <Link
-            to="/signup"
-            className="btn btn-primary btn-lg"
-            id="btn-bottom-cta"
-          >
-            Start for Free Today
-            <ArrowRight size={16} />
-          </Link>
-        </div>
-      </section>
-
-      {/* ══ FOOTER ══════════════════════════════════════════════ */}
-      <footer
-        style={{
-          borderTop: "1px solid var(--color-border-hairline)",
-          padding: "32px 24px",
-        }}
-      >
-        <div
-          style={{
-            maxWidth: "1100px",
-            margin: "0 auto",
-            display: "flex",
-            flexWrap: "wrap",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "16px",
-          }}
-        >
-          {/* Logo */}
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div
-              style={{
-                width: "24px",
-                height: "24px",
-                borderRadius: "6px",
-                background: "var(--color-brand-600)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "9px",
-                fontWeight: 800,
-                color: "#fff",
-              }}
-            >
-              DT
+      {/* ─── Footer ──────────────────────────────────────────── */}
+      <footer className="border-t border-white/[0.08] bg-canvas py-12">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 px-6 sm:flex-row sm:px-8">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-600 text-white">
+              <Layers size={14} />
             </div>
-            <span
-              style={{
-                fontSize: "14px",
-                fontWeight: 700,
-                color: "var(--color-text-primary)",
-              }}
-            >
-              DocTalker
+            <span className="text-sm font-bold text-white">DocTalker</span>
+            <span className="text-xs text-slate-500">
+              © {new Date().getFullYear()} DocTalker Systems. All rights
+              reserved.
             </span>
           </div>
 
-          {/* Links */}
-          <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
-            {["Privacy", "Terms", "Pricing", "Contact"].map((l) => (
-              <a
-                key={l}
-                href="#"
-                style={{
-                  fontSize: "13px",
-                  color: "var(--color-text-muted)",
-                  textDecoration: "none",
-                  transition: "color 120ms",
-                }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.color = "var(--color-text-primary)")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.color = "var(--color-text-muted)")
-                }
-              >
-                {l}
-              </a>
-            ))}
+          <div className="flex items-center gap-6 text-xs text-slate-400">
+            <Link to="/login" className="hover:text-white transition">
+              Sign In
+            </Link>
+            <Link to="/signup" className="hover:text-white transition">
+              Create Account
+            </Link>
+            <a href="#capabilities" className="hover:text-white transition">
+              Modalities
+            </a>
+            <a href="#pricing" className="hover:text-white transition">
+              Pricing
+            </a>
           </div>
-
-          <p
-            style={{
-              fontSize: "12px",
-              color: "var(--color-text-disabled)",
-              margin: 0,
-            }}
-          >
-            © 2024 DocTalker. All rights reserved.
-          </p>
         </div>
       </footer>
     </div>

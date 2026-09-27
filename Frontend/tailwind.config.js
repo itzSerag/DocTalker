@@ -5,43 +5,50 @@ export default {
     extend: {
       // ─── Color Palette ────────────────────────────────────────────────────
       colors: {
-        // Background hierarchy (darkest → lightest)
-        canvas: "#080C14",
-        base: "#0C1018",
+        // Background hierarchy (Obsidian slate depth)
+        canvas: "#0A0E17",
+        base: "#0F1523",
         surface: {
-          0: "#111827",
-          1: "#1A2235",
-          2: "#232D42",
-          3: "#2C3A52",
+          0: "#141B2D",
+          1: "#1B243B",
+          2: "#24304D",
+          3: "#2F3E63",
         },
-        inp: "#0E1421",
+        inp: "#0C111C",
 
-        // Primary brand (indigo ramp)
+        // Primary brand (Cobalt / Sapphire)
         brand: {
-          50: "#EEF2FF",
-          100: "#E0E7FF",
-          200: "#C7D2FE",
-          300: "#A5B4FC",
-          400: "#818CF8",
-          500: "#6366F1",
-          600: "#4F46E5",
-          700: "#4338CA",
-          800: "#3730A3",
-          900: "#1E1B4B",
-          950: "#13103A",
+          50: "#EFF6FF",
+          100: "#DBEAFE",
+          200: "#BFDBFE",
+          300: "#93C5FD",
+          400: "#60A5FA",
+          500: "#3B82F6",
+          600: "#2563EB",
+          700: "#1D4ED8",
+          800: "#1E40AF",
+          900: "#1E3A8A",
+          950: "#0F172A",
+        },
+
+        // Editorial Accents
+        amber: {
+          400: "#FBBF24",
+          500: "#F59E0B",
+          600: "#D97706",
         },
 
         // Accent colors
         success: "#10B981",
         warning: "#F59E0B",
-        danger: "#F43F5E",
+        danger: "#EF4444",
         info: "#0EA5E9",
 
         // Border tokens (using opacity-aware values via CSS vars)
-        "border-hairline": "rgba(255,255,255,0.04)",
-        "border-subtle": "rgba(255,255,255,0.07)",
-        "border-default": "rgba(255,255,255,0.12)",
-        "border-strong": "rgba(255,255,255,0.22)",
+        "border-hairline": "rgba(255,255,255,0.06)",
+        "border-subtle": "rgba(255,255,255,0.10)",
+        "border-default": "rgba(255,255,255,0.15)",
+        "border-strong": "rgba(255,255,255,0.26)",
       },
 
       // ─── Typography ───────────────────────────────────────────────────────

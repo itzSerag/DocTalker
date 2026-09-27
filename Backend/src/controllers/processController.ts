@@ -2,9 +2,10 @@ import { Request, Response, NextFunction } from 'express';
 import DocumentModel from '../models/Document';
 import Chat from '../models/Chat';
 import { convertDocToChunks } from '../utils/extractDataFromDocs';
-import { getEmbeddings } from '../services/huggingface';
+import { getEmbeddings } from '../services/embeddings';
 import catchAsync from '../utils/catchAsync';
 import AppError from '../utils/appError';
+import logger from '../utils/logger';
 
 export const handler = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const { chatId } = req.body;
@@ -38,25 +39,45 @@ export const handler = catchAsync(async (req: Request, res: Response, next: Next
     // Process all files in the document
     for (const file of document.Files) {
         try {
-            const chunks = await convertDocToChunks(file.FileName, file.FileURL, file.FileKey);
+            let readableChunks: { chunk: string; pageNumber: number | null; fileName: string }[] = [];
 
-            const readableChunks = chunks.filter((chunk) => chunk.chunk?.trim());
+            // If file already has pre-extracted raw text (e.g., from OCR or YouTube)
+            if (file.Chunks && file.Chunks.length > 0 && file.Chunks.some((c) => c.rawText?.trim())) {
+                readableChunks = file.Chunks.filter((c) => c.rawText?.trim()).map((c) => ({
+                    chunk: c.rawText,
+                    pageNumber: c.pageNumber || null,
+                    fileName: c.fileName || file.FileName,
+                }));
+            } else {
+                const extracted = await convertDocToChunks(file.FileName, file.FileURL, file.FileKey);
+                readableChunks = extracted
+                    .filter((chunk) => chunk.chunk?.trim())
+                    .map((c) => ({
+                        chunk: c.chunk,
+                        pageNumber: c.pageNumber || null,
+                        fileName: c.fileName || file.FileName,
+                    }));
+            }
+
+            if (readableChunks.length === 0) {
+                logger.warn(`No readable chunks found for file: ${file.FileName}`);
+                continue;
+            }
+
             const vectors: any[] = [];
-            // Keep a small concurrency cap: avoid slow one-request-at-a-time
-            // ingestion without flooding the embedding provider on large files.
-            for (let index = 0; index < readableChunks.length; index += 4) {
-                const batch = readableChunks.slice(index, index + 4);
-                const embeddings = await Promise.all(batch.map((chunk) => getEmbeddings(chunk.chunk)));
-                batch.forEach((chunk, batchIndex) => {
+            for (let index = 0; index < readableChunks.length; index += 8) {
+                const batch = readableChunks.slice(index, index + 8);
+                const embeddings = await Promise.all(batch.map((item) => getEmbeddings(item.chunk)));
+                batch.forEach((item, batchIndex) => {
                     const embedding = embeddings[batchIndex];
                     if (!Array.isArray(embedding) || embedding.length === 0 || Array.isArray(embedding[0])) {
                         throw new Error('Embedding service returned an invalid vector');
                     }
                     vectors.push({
-                        rawText: chunk.chunk,
+                        rawText: item.chunk,
                         embeddings: embedding as number[],
-                        pageNumber: chunk.pageNumber || null,
-                        fileName: chunk.fileName,
+                        pageNumber: item.pageNumber || null,
+                        fileName: item.fileName,
                     });
                 });
             }
@@ -64,13 +85,14 @@ export const handler = catchAsync(async (req: Request, res: Response, next: Next
             file.Chunks = vectors;
             file.isProcessed = true;
         } catch (error: any) {
-            console.error(`Error processing file ${file.FileName}:`, error.message);
+            logger.error(`Error processing file ${file.FileName}: ${error.message}`);
             return next(new AppError(`Error processing file ${file.FileName}: ${error.message}`, 500));
         }
     }
 
-    if (document.Files.some((file) => file.Chunks.length === 0)) {
-        return next(new AppError('No readable text could be extracted from one or more files in this source.', 422));
+    const totalChunks = document.Files.reduce((acc, f) => acc + (f.Chunks?.length || 0), 0);
+    if (totalChunks === 0) {
+        return next(new AppError('No readable text could be extracted from the files in this source.', 422));
     }
 
     document.isProcessed = true;

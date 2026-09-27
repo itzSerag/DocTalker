@@ -25,20 +25,34 @@ const getGenAI = (): GoogleGenerativeAI => {
     return new GoogleGenerativeAI(apiKey);
 };
 
-// gemini-1.5-flash handles both pure text and multimodal images seamlessly
-const DEFAULT_MODEL = 'gemini-1.5-flash';
+// gemini-3.8-flash handles pure text and multimodal images seamlessly
+const DEFAULT_MODEL = 'gemini-3.8-flash';
 
 export const textOnly = async (prompt: string): Promise<string> => {
     try {
         const genAI = getGenAI();
-        const model = genAI.getGenerativeModel({
-            model: process.env.GEMINI_MODEL || DEFAULT_MODEL,
-            safetySettings,
-        });
-
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        return response.text();
+        const primaryModel = process.env.GEMINI_MODEL || DEFAULT_MODEL;
+        try {
+            const model = genAI.getGenerativeModel({
+                model: primaryModel,
+                safetySettings,
+            });
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            return response.text();
+        } catch (innerErr: any) {
+            // Fallback to gemini-3.5-flash-lite if primary is rate-limited or unavailable
+            if (primaryModel !== 'gemini-3.5-flash-lite') {
+                const fallbackModel = genAI.getGenerativeModel({
+                    model: 'gemini-3.5-flash-lite',
+                    safetySettings,
+                });
+                const result = await fallbackModel.generateContent(prompt);
+                const response = await result.response;
+                return response.text();
+            }
+            throw innerErr;
+        }
     } catch (error: any) {
         console.error('Gemini textOnly error:', error.message);
         throw new Error(`Gemini error: ${error.message}`);
@@ -75,13 +89,25 @@ export const textAndImage = async (
 export const textStream = async (prompt: string): Promise<AsyncIterable<any>> => {
     try {
         const genAI = getGenAI();
-        const model = genAI.getGenerativeModel({
-            model: process.env.GEMINI_MODEL || DEFAULT_MODEL,
-            safetySettings,
-        });
-
-        const result = await model.generateContentStream(prompt);
-        return result.stream;
+        const primaryModel = process.env.GEMINI_MODEL || DEFAULT_MODEL;
+        try {
+            const model = genAI.getGenerativeModel({
+                model: primaryModel,
+                safetySettings,
+            });
+            const result = await model.generateContentStream(prompt);
+            return result.stream;
+        } catch (innerErr: any) {
+            if (primaryModel !== 'gemini-3.5-flash-lite') {
+                const fallbackModel = genAI.getGenerativeModel({
+                    model: 'gemini-3.5-flash-lite',
+                    safetySettings,
+                });
+                const result = await fallbackModel.generateContentStream(prompt);
+                return result.stream;
+            }
+            throw innerErr;
+        }
     } catch (error: any) {
         console.error('Gemini textStream error:', error.message);
         throw new Error(`Gemini error: ${error.message}`);

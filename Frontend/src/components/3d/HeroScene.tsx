@@ -122,7 +122,7 @@ export const HeroScene: React.FC<{ className?: string }> = ({
             ctx.beginPath();
             ctx.moveTo(p1.x, p1.y);
             ctx.lineTo(p2.x, p2.y);
-            ctx.strokeStyle = `rgba(99, 102, 241, ${lineAlpha})`;
+            ctx.strokeStyle = `rgba(59, 130, 246, ${lineAlpha})`;
             ctx.lineWidth = 1;
             ctx.stroke();
           }
@@ -134,7 +134,7 @@ export const HeroScene: React.FC<{ className?: string }> = ({
         const p = projected[i];
         ctx.beginPath();
         ctx.arc(p.x, p.y, Math.max(1.5, p.scale * 2.2), 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(129, 140, 248, ${p.alpha})`;
+        ctx.fillStyle = `rgba(96, 165, 250, ${p.alpha})`;
         ctx.fill();
       }
 

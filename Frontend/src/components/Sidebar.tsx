@@ -6,8 +6,6 @@ import {
   LogOut,
   X,
   Search,
-  Settings,
-  ChevronRight,
   Crown,
   Zap,
   Loader2,
@@ -30,6 +28,19 @@ interface SidebarProps {
   onNewChat: () => void;
   onOpenPricing?: () => void;
   onOpenUpload?: () => void;
+}
+
+function formatChatName(rawName: string): string {
+  if (!rawName) return "Untitled Chat";
+  let name = rawName.trim();
+  // If it's a file name with extension joined like filenamepdf -> filename.pdf
+  if (/pdf$/i.test(name) && !/\.pdf$/i.test(name)) {
+    name = name.slice(0, -3) + ".pdf";
+  }
+  // If it has underscores or hyphens, replace with space
+  name = name.replace(/[_-]+/g, " ");
+  // Capitalize first letter of words
+  return name.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -62,35 +73,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const quotaPct = Math.round((usedQueries / totalQueries) * 100);
 
   const content = (
-    <aside
-      className="flex flex-col h-full select-none"
-      style={{
-        width: "260px",
-        background: "var(--color-base)",
-        borderRight: "1px solid var(--color-border-subtle)",
-      }}
-    >
+    <aside className="flex flex-col h-full select-none w-64 bg-base border-r border-white/[0.08]">
       {/* ── Brand Header ── */}
-      <div
-        className="flex items-center justify-between px-4 h-14 shrink-0"
-        style={{ borderBottom: "1px solid var(--color-border-hairline)" }}
-      >
+      <div className="flex items-center justify-between px-4 h-14 shrink-0 border-b border-white/[0.08]">
         <div className="flex items-center gap-2.5">
-          <div
-            className="w-7 h-7 rounded-sm flex items-center justify-center font-bold text-xs text-white"
-            style={{
-              background: "var(--color-brand-600)",
-              boxShadow: "var(--shadow-brand-sm)",
-            }}
-          >
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs text-white bg-brand-600 shadow-sm shadow-brand-500/20">
             DT
           </div>
-          <span
-            className="font-bold text-sm tracking-tight"
-            style={{ color: "var(--color-text-primary)" }}
-          >
-            DocTalker
-          </span>
+          <div>
+            <span className="font-bold text-sm tracking-tight text-slate-100 block leading-tight">
+              DocTalker
+            </span>
+            <span className="text-[10px] text-slate-400 font-medium">
+              Document Workspace
+            </span>
+          </div>
         </div>
 
         {onCloseMobile && (
@@ -100,81 +97,66 @@ export const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
 
-      {/* ── New Chat / Upload Buttons ── */}
-      <div className="px-3 pt-3 pb-2 shrink-0 space-y-1.5">
+      {/* ── Action Buttons ── */}
+      <div className="p-3 shrink-0 flex items-center gap-2">
         <button
           onClick={() => {
             onNewChat();
             onCloseMobile?.();
           }}
-          className="btn btn-primary btn-md w-full"
+          className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold shadow-sm transition"
           id="btn-new-chat"
         >
-          <Plus size={15} strokeWidth={2.5} />
-          <span>New Conversation</span>
+          <Plus size={14} strokeWidth={2.5} />
+          <span>New Chat</span>
         </button>
+
         {onOpenUpload && (
           <button
             onClick={() => {
               onOpenUpload();
               onCloseMobile?.();
             }}
-            className="btn btn-secondary btn-sm w-full"
+            className="flex items-center justify-center p-2 rounded-xl bg-surface-1 hover:bg-surface-2 border border-white/10 text-slate-300 hover:text-white transition"
+            title="Upload Document"
           >
-            <UploadCloud size={13} />
-            <span>Upload Document</span>
+            <UploadCloud size={15} />
           </button>
         )}
       </div>
 
       {/* ── Search ── */}
-      <div className="px-3 pb-3 shrink-0">
-        <div className="input-icon gap-2">
-          <Search
-            size={13}
-            style={{ color: "var(--color-text-muted)" }}
-            className="shrink-0"
-          />
+      <div className="px-3 pb-2 shrink-0">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-1/60 border border-white/[0.08] text-xs">
+          <Search size={13} className="text-slate-400 shrink-0" />
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search conversations..."
+            placeholder="Search conversations…"
+            className="w-full bg-transparent border-none outline-none text-xs text-slate-200 placeholder:text-slate-500"
           />
         </div>
       </div>
 
-      <div
-        className="text-label px-4 pb-2 shrink-0"
-        style={{ letterSpacing: "0.08em" }}
-      >
-        Recent Chats
+      <div className="px-4 pt-2 pb-1.5 shrink-0 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+        <span>Recent Chats</span>
+        <span className="text-slate-600">{filteredChats.length}</span>
       </div>
 
       {/* ── Chat List ── */}
-      <nav className="flex-1 overflow-y-auto px-2 pb-2 space-y-0.5">
+      <nav className="flex-1 overflow-y-auto px-2 pb-2 space-y-1">
         {chatsLoading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2
-              size={20}
-              className="animate-spin"
-              style={{ color: "var(--color-text-muted)" }}
-            />
+            <Loader2 size={18} className="animate-spin text-slate-500" />
           </div>
         ) : filteredChats.length === 0 ? (
-          <div className="px-3 py-6 text-center">
-            <MessageSquare
-              size={24}
-              className="mx-auto mb-2"
-              style={{ color: "var(--color-text-disabled)" }}
-            />
-            <p className="text-caption text-xs">
+          <div className="px-3 py-8 text-center">
+            <MessageSquare size={22} className="mx-auto mb-2 text-slate-600" />
+            <p className="text-xs text-slate-400">
               {searchQuery ? "No matching chats" : "No conversations yet"}
             </p>
             {!searchQuery && (
-              <p
-                className="text-xs mt-1"
-                style={{ color: "var(--color-text-disabled)" }}
-              >
+              <p className="text-[11px] mt-1 text-slate-500">
                 Upload a document to get started
               </p>
             )}
@@ -189,24 +171,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   onSelectChat(chat.id);
                   onCloseMobile?.();
                 }}
-                className={`nav-item w-full text-left ${isActive ? "active" : ""}`}
+                className={`group flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-xl text-xs transition-all ${
+                  isActive
+                    ? "bg-surface-2/90 text-white font-medium border border-white/10 shadow-sm"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]"
+                }`}
               >
-                <MessageSquare
-                  size={14}
-                  className="shrink-0"
-                  style={{
-                    color: isActive
-                      ? "var(--color-brand-400)"
-                      : "var(--color-text-muted)",
-                  }}
-                />
-                <span className="flex-1 truncate text-sm">{chat.chatName}</span>
+                <div
+                  className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${
+                    isActive
+                      ? "bg-brand-500/20 text-brand-300"
+                      : "bg-surface-1 text-slate-400 group-hover:text-slate-300"
+                  }`}
+                >
+                  <MessageSquare size={12} />
+                </div>
+                <span className="flex-1 truncate">
+                  {formatChatName(chat.chatName)}
+                </span>
                 {isActive && (
-                  <ChevronRight
-                    size={12}
-                    style={{ color: "var(--color-text-muted)" }}
-                    className="shrink-0"
-                  />
+                  <div className="w-1.5 h-1.5 rounded-full bg-brand-400 shrink-0" />
                 )}
               </button>
             );
@@ -215,39 +199,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </nav>
 
       {/* ── Footer ── */}
-      <div
-        className="px-3 py-3 shrink-0 space-y-3"
-        style={{ borderTop: "1px solid var(--color-border-hairline)" }}
-      >
+      <div className="p-3 shrink-0 space-y-3 border-t border-white/[0.08] bg-base">
         {/* Quota Card */}
-        <div
-          className="rounded-md p-3 space-y-2"
-          style={{
-            background: "var(--color-surface-0)",
-            border: "1px solid var(--color-border-subtle)",
-          }}
-        >
-          <div className="flex items-center justify-between">
-            <span
-              className="text-xs font-medium"
-              style={{ color: "var(--color-text-secondary)" }}
-            >
-              Daily Queries
-            </span>
-            <span
-              className="text-xs font-bold"
-              style={{ color: "var(--color-brand-400)" }}
-            >
-              {usedQueries}/{totalQueries}
+        <div className="rounded-xl p-3 space-y-2 bg-surface-1/60 border border-white/[0.08]">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-slate-400 font-medium">Daily Queries</span>
+            <span className="font-semibold text-brand-300">
+              {usedQueries} / {totalQueries}
             </span>
           </div>
 
-          <div
-            className="h-1 rounded-full overflow-hidden"
-            style={{ background: "var(--color-surface-2)" }}
-          >
+          <div className="h-1.5 rounded-full overflow-hidden bg-surface-3">
             <div
-              className="h-full rounded-full transition-all duration-500"
+              className="h-full rounded-full transition-all duration-500 bg-brand-500"
               style={{
                 width: `${Math.min(quotaPct, 100)}%`,
                 background:
@@ -260,41 +224,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           <button
             onClick={onOpenPricing}
-            className="btn btn-secondary btn-sm w-full text-xs"
+            className="flex items-center justify-center gap-1.5 w-full py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white bg-surface-2/60 hover:bg-surface-2 transition"
           >
-            <Zap size={12} style={{ color: "var(--color-brand-400)" }} />
-            <span>Upgrade Plan</span>
+            <Zap size={11} className="text-amber-400" />
+            <span>Upgrade to Pro</span>
           </button>
         </div>
 
         {/* User Profile Row */}
         <div className="flex items-center gap-2.5 px-1">
-          <div
-            className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-semibold text-sm"
-            style={{
-              background: "var(--color-brand-900)",
-              border: "1px solid rgba(99,102,241,0.3)",
-              color: "var(--color-brand-300)",
-            }}
-          >
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 font-semibold text-xs text-brand-200 bg-brand-500/20 border border-brand-500/30">
             {user?.firstName?.[0]?.toUpperCase() ?? "U"}
           </div>
 
           <div className="flex-1 min-w-0">
-            <div
-              className="text-sm font-semibold truncate"
-              style={{ color: "var(--color-text-primary)" }}
-            >
+            <div className="text-xs font-semibold truncate text-slate-200">
               {user
                 ? `${user.firstName} ${user.lastName || ""}`.trim()
-                : "Guest"}
+                : "DocTalker User"}
             </div>
             <div className="flex items-center gap-1">
-              <Crown size={10} style={{ color: "var(--color-warning)" }} />
-              <span
-                className="text-2xs font-semibold"
-                style={{ color: "var(--color-warning)" }}
-              >
+              <Crown size={10} className="text-amber-400" />
+              <span className="text-[10px] font-semibold text-amber-400 uppercase tracking-wider">
                 {user?.subscription === "free"
                   ? "Free Tier"
                   : (user?.subscription ?? "Free Tier")}
@@ -302,13 +253,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-0.5">
-            <button className="toolbar-btn" title="Settings">
-              <Settings size={14} />
-            </button>
+          <div className="flex items-center">
             <button
               onClick={handleLogout}
-              className="toolbar-btn"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-white/5 transition"
               title="Log out"
               id="btn-logout"
             >
