@@ -158,7 +158,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
             <div className="relative h-full w-full bg-canvas flex flex-col">
               <iframe
                 key={previewUrl}
-                src={`${previewUrl}#toolbar=1&navpanes=0&view=FitH`}
+                src={`${previewUrl}#toolbar=0&navpanes=0&view=FitH`}
                 title={activeFile.FileName}
                 className="h-full w-full flex-1 border-0"
               />
